@@ -20,6 +20,8 @@ Sadly I couldn't figure out how to do make *every* item unable to proc, though. 
 - Headstompers
 - Cryptic Source from Starstorm 2
 
+I was also unable to let twisted elite effects proc items, as it's internally seen as razorwire which this artifact prevents from proccing items. That means this artifact indirectly nerfs twisted elites!
+
 ## Bugs/Suggestions
 Due to the way this artifact works I have a feeling that either the procs from some mod somewhere gets turned off when it shouldn't, or I missed an item that needs to be explicitly checked for to prevent item proccing.
 
