@@ -13,8 +13,10 @@ There are also some items whose ability to proc your items I left configurable:
 
 I also made it configurable whether or not procs are able to crit or not, allowed by default. IIRC procs couldn't crit in ror1 & rorr, so it's an option for those who want it.
 
+Along with all that, with Risk of Options support, if everyone in the game changes a config option for the artifact, config options can be changed mid-run! Best to do it in the bazaar or just somewhere where there's no combat going on to prevent any errors.
+
 ## Items unaffected
-Sadly I couldn't figure out how to do this for *every single* item, though. These are the only ones that AFAIK I'm unable to prevent proccing on-hit items without modifying the items directly:
+Sadly I couldn't figure out how to do make *every* item unable to proc, though. These are the only ones that AFAIK I'm unable to prevent proccing on-hit items without modifying the items directly:
 - Headstompers
 - Cryptic Source from Starstorm 2
 
