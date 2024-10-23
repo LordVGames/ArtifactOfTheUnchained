@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using System.Linq;
-using RiskOfOptions;
 
 namespace NoProcChainsArtifact
 {
@@ -165,7 +164,7 @@ namespace NoProcChainsArtifact
              *  missile launcher has a missle inflictor like atg, but no procchainmask since it's an initial attack unlike atg
              */
 
-            LogDamageInfo(damageInfo);
+            //LogDamageInfo(damageInfo);
             if (damageInfo.procChainMask.mask > 0)
             {
                 damageInfo.procCoefficient = 0;
