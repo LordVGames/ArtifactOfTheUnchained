@@ -23,4 +23,4 @@ Sadly I couldn't figure out how to do make *every* item unable to proc, though. 
 ## Bugs/Suggestions
 Due to the way this artifact works I have a feeling that either the procs from some mod somewhere gets turned off when it shouldn't, or I missed an item that needs to be explicitly checked for to prevent item proccing.
 
-So, if you have a suggestion, found a bug, or found an item that isn't supported by the artifact, feel free to either ping me (lordvgames) in the ror2 modding discord or make a github issue here.
+So, if you have a suggestion, found a bug, or found an item that isn't supported by the artifact, feel free to either ping me (lordvgames) in the ror2 modding discord or make a github issue here. This mod also uses a language file, so (I'm pretty sure) anyone can contribute and add a translation for the mod if they want.
