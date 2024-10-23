@@ -1,8 +1,7 @@
 ﻿using UnityEngine;
+using BepInEx.Configuration;
 using RoR2;
 using R2API;
-using BepInEx.Configuration;
-using R2API.ContentManagement;
 
 namespace ExamplePlugin
 {

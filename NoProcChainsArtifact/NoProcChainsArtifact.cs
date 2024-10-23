@@ -9,15 +9,17 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using System.Linq;
+using RiskOfOptions;
 
 namespace NoProcChainsArtifact
 {
     [BepInDependency(LanguageAPI.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(R2APIContentManager.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
+    [BepInDependency(RiskOfOptions.PluginInfo.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     public class NoProcChainsArtifact : BaseUnityPlugin
     {
-        public static PluginInfo PluginInfo { get; private set; }
+        public static BepInEx.PluginInfo PluginInfo { get; private set; }
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "NoProcChainsArtifact";

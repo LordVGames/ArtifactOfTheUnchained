@@ -1,13 +1,12 @@
-﻿using UnityEngine;
+﻿using System.Runtime.CompilerServices;
+using UnityEngine;
 using RiskOfOptions;
-using RiskOfOptions.OptionConfigs;
 using RiskOfOptions.Options;
 
 namespace NoProcChainsArtifact
 {
     public static class RiskOfOptionsSupport
     {
-        public const string PluginName = "com.rune580.riskofoptions";
         private static bool? _modexists;
         public static bool ModIsRunning
         {
@@ -15,16 +14,17 @@ namespace NoProcChainsArtifact
             {
                 if (_modexists == null)
                 {
-                    _modexists = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(PluginName);
+                    _modexists = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(PluginInfo.PLUGIN_GUID);
                 }
                 return (bool)_modexists;
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         public static void AddOptions()
         {
             ModSettingsManager.SetModIcon(ModAssets.AssetBundle.LoadAsset<Sprite>("RoOIcon.png"));
-            ModSettingsManager.SetModDescription("Adds some chat messages that you can configure the contents of, along with when they appear in your runs.");
+            ModSettingsManager.SetModDescription("Adds an artifact that disables proc chains and prevents most items from starting a proc chain.");
 
             ModSettingsManager.AddOption(
                 new CheckBoxOption(
