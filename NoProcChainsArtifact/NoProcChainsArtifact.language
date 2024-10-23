@@ -1,0 +1,10 @@
+{
+  "strings": {
+    "ARTIFACT_NO_PROC_CHAINS_NAME": "Artifact of the Unchained",
+    "ARTIFACT_NO_PROC_CHAINS_DESCRIPTION": "Nearly all item effects cannot proc other on-hit item effects."
+  },
+  "en": {
+    "ARTIFACT_NO_PROC_CHAINS_NAME": "Artifact of the Unchained",
+    "ARTIFACT_NO_PROC_CHAINS_DESCRIPTION": "Nearly all item effects cannot proc other on-hit item effects."
+  }
+}
