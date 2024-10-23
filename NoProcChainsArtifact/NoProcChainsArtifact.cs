@@ -49,7 +49,7 @@ namespace NoProcChainsArtifact
         public static ConfigEntry<bool> AllowProcCrits;
         public override string ArtifactLangTokenName => "NO_PROC_CHAINS";
         public override string ArtifactName => "Artifact of the Unchained";
-        public override string ArtifactDescription => "Nearly all item effects cannot proc other on-hit item effects.";
+        public override string ArtifactDescription => "Almost all item effects cannot proc your on-hit item effects for you.";
         public override Sprite ArtifactEnabledIcon => ModAssets.AssetBundle.LoadAsset<Sprite>("NoProcChainsArtifactIcon_Enabled.png");
         public override Sprite ArtifactDisabledIcon => ModAssets.AssetBundle.LoadAsset<Sprite>("NoProcChainsArtifactIcon_Disabled.png");
         //public static GameObject missileProjectileGameObject;
