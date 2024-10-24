@@ -22,7 +22,7 @@ namespace NoProcChainsArtifact
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "NoProcChainsArtifact";
-        public const string PluginVersion = "1.0.0";
+        public const string PluginVersion = "1.0.1";
         public List<ArtifactBase> Artifacts = new List<ArtifactBase>();
 
         public void Awake()
@@ -175,8 +175,18 @@ namespace NoProcChainsArtifact
             }
             else if (damageInfo.inflictor == null)
             {
-                // checking for royal capacitor here since it has no inflictor
-                if (AllowEquipmentProcs.Value && damageInfo.damageType.damageTypeCombined == 131104)
+                /*
+                 * checking for the following here as they have no inflictor and don't work properly with 0 coefficient:
+                 * 
+                 * glacial elite death explosions
+                 * nemesis enforcer minigun-stance secondary (why does this attack not have an inflictor???)
+                 * royal capacitor when the config allows it to proc
+                 * blood shrines
+                 */
+                if ((damageInfo.procCoefficient == 0.75 && damageInfo.damageType.damageTypeCombined == 131328)
+                    || (damageInfo.attacker.ToString() == "NemesisEnforcerBody(Clone) (UnityEngine.GameObject)" && damageInfo.damageType.damageTypeCombined == 131104)
+                    || (AllowEquipmentProcs.Value && damageInfo.damageType.damageTypeCombined == 131104)
+                    || damageInfo.attacker.ToString() == "ShrineBlood(Clone) (UnityEngine.GameObject)")
                 {
                     orig(self, damageInfo);
                     return;
@@ -186,6 +196,7 @@ namespace NoProcChainsArtifact
                 {
                     damageInfo.crit = false;
                 }
+
                 damageInfo.procCoefficient = 0;
             }
             else if (IsInflictorFromItem(damageInfo.inflictor.ToString()))
