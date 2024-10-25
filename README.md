@@ -1,7 +1,7 @@
 # Artifact of the Unchained
 This artifact prevents proc chains from happening with multiple on-hit items (ATG, charged perforator, polylute, etc.) along with removing the ability to proc on-hit items for pretty much all damaging equipment and for certain items that hit enemies for you (razorwire, unstable tesla coil, etc.)
 
-![artifactoftheunchained](https://github.com/user-attachments/assets/d0f921b5-46bd-427a-99b7-91042c115976)
+![artifactoftheunchainednew](https://github.com/user-attachments/assets/f86beb50-1c7e-42cb-8fb5-d506c93fceb5)
 
 ## Configuration
 There are also some items whose ability to proc your items I left configurable:
