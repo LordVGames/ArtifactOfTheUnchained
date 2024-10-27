@@ -22,7 +22,7 @@ namespace NoProcChainsArtifact
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "NoProcChainsArtifact";
-        public const string PluginVersion = "1.0.2";
+        public const string PluginVersion = "1.0.3";
         public List<ArtifactBase> Artifacts = new List<ArtifactBase>();
 
         public void Awake()
@@ -175,6 +175,13 @@ namespace NoProcChainsArtifact
             }
             else if (damageInfo.inflictor == null)
             {
+                // void fog and probably other things have no inflictor nor attacker so that needs to be handled here or else errors happen
+                if (damageInfo.attacker == null)
+                {
+                    orig(self, damageInfo);
+                    return;
+                }
+
                 /*
                  * checking for the following here as they have no inflictor and don't work properly with 0 coefficient:
                  * 
