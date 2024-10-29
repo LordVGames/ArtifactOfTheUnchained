@@ -18,11 +18,11 @@ namespace NoProcChainsArtifact
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     public class NoProcChainsArtifact : BaseUnityPlugin
     {
-        public static BepInEx.PluginInfo PluginInfo { get; private set; }
+        public static PluginInfo PluginInfo { get; private set; }
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "NoProcChainsArtifact";
-        public const string PluginVersion = "1.0.3";
+        public const string PluginVersion = "1.0.4";
         public List<ArtifactBase> Artifacts = new List<ArtifactBase>();
 
         public void Awake()
@@ -53,8 +53,6 @@ namespace NoProcChainsArtifact
         public override string ArtifactDescription => "Almost all item effects cannot proc your on-hit item effects for you.";
         public override Sprite ArtifactEnabledIcon => ModAssets.AssetBundle.LoadAsset<Sprite>("NoProcChainsArtifactIcon_Enabled.png");
         public override Sprite ArtifactDisabledIcon => ModAssets.AssetBundle.LoadAsset<Sprite>("NoProcChainsArtifactIcon_Disabled.png");
-        //public static GameObject missileProjectileGameObject;
-        //public static GameObject sawmerangProjectileGameObject;
         public override void Init(ConfigFile config)
         {
             CreateConfig(config);
@@ -65,9 +63,6 @@ namespace NoProcChainsArtifact
             {
                 RiskOfOptionsSupport.AddOptions();
             }
-
-            /*missileProjectileGameObject = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Common/MissileProjectile.prefab").WaitForCompletion();
-            sawmerangProjectileGameObject = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Common/Sawmerang.prefab").WaitForCompletion();*/
         }
         private void CreateConfig(ConfigFile config)
         {
@@ -124,13 +119,14 @@ namespace NoProcChainsArtifact
                     return !AllowShurikenProcs.Value;
                 // ego and gloop get separate configs because gloop proccing gives it a cool niche and ego prolly too busted with proc chains
                 case "LunarSunProjectile(Clone) (UnityEngine.GameObject)":
-                    return !AllowEgoProcs.Value; // returns false if config allows procs, vice versa if not
+                    return !AllowEgoProcs.Value;
                 case "VagrantNovaItemBodyAttachment(Clone) (UnityEngine.GameObject)":
                     return !AllowGloopProcs.Value;
 
                 // equipments
                 case "GoldGatController(Clone) (UnityEngine.GameObject)":
                 case "MissileProjectile(Clone) (UnityEngine.GameObject)":
+                case "BeamSphere(Clone) (UnityEngine.GameObject)":
                 case "MeteorStorm(Clone) (UnityEngine.GameObject)":
                 case "Sawmerang(Clone) (UnityEngine.GameObject)":
                 case "VendingMachineProjectile(Clone) (UnityEngine.GameObject)":
@@ -167,15 +163,26 @@ namespace NoProcChainsArtifact
             //LogDamageInfo(damageInfo);
             if (damageInfo.procChainMask.mask > 0)
             {
-                damageInfo.procCoefficient = 0;
+                // stunning doesn't work if proc coefficient is 0 which means electric boomerang needs to be checked for or it'll never stun
+                if (damageInfo.inflictor && damageInfo.inflictor.ToString() == "StunAndPierceBoomerang(Clone) (UnityEngine.GameObject)")
+                {
+                    // idk if setting the coefficient to this low of a decimal will affect performance or not
+                    damageInfo.procCoefficient = 0.001f;
+                    orig(self, damageInfo);
+                    return;
+                }
                 if (!AllowProcCrits.Value)
                 {
                     damageInfo.crit = false;
                 }
+
+                damageInfo.procCoefficient = 0;
+                orig(self, damageInfo);
+                return;
             }
             else if (damageInfo.inflictor == null)
             {
-                // void fog and probably other things have no inflictor nor attacker so that needs to be handled here or else errors happen
+                // void fog and probably other things have no inflictor nor attacker so that needs to be checked for or else damage isn't dealt
                 if (damageInfo.attacker == null)
                 {
                     orig(self, damageInfo);
@@ -198,13 +205,15 @@ namespace NoProcChainsArtifact
                     orig(self, damageInfo);
                     return;
                 }
-                // checking for no crit procs here might be bad but uh fuck around and find out i guess
+                // checking for no crit procs here might affect survivor abilities but i guess we'll find out eventually
                 if (!AllowProcCrits.Value)
                 {
                     damageInfo.crit = false;
                 }
 
                 damageInfo.procCoefficient = 0;
+                orig(self, damageInfo);
+                return;
             }
             else if (IsInflictorFromItem(damageInfo.inflictor.ToString()))
             {
