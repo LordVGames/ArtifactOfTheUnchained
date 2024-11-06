@@ -43,6 +43,11 @@ namespace NoProcChainsArtifact
             );
             ModSettingsManager.AddOption(
                 new CheckBoxOption(
+                    ArtifactOfTheUnchained.AllowFireworkProcs
+                )
+            );
+            ModSettingsManager.AddOption(
+                new CheckBoxOption(
                     ArtifactOfTheUnchained.AllowGloopProcs
                 )
             );

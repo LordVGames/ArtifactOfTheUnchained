@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using System.Linq;
+using UnityEngine.AddressableAssets;
 
 namespace NoProcChainsArtifact
 {
@@ -22,7 +23,7 @@ namespace NoProcChainsArtifact
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "NoProcChainsArtifact";
-        public const string PluginVersion = "1.0.4";
+        public const string PluginVersion = "1.0.5";
         public List<ArtifactBase> Artifacts = new List<ArtifactBase>();
 
         public void Awake()
@@ -43,6 +44,7 @@ namespace NoProcChainsArtifact
     public class ArtifactOfTheUnchained : ArtifactBase
     {
         public static ConfigEntry<bool> AllowEquipmentProcs;
+        public static ConfigEntry<bool> AllowFireworkProcs;
         public static ConfigEntry<bool> AllowShurikenProcs;
         public static ConfigEntry<bool> AllowEgoProcs;
         public static ConfigEntry<bool> AllowGloopProcs;
@@ -55,8 +57,8 @@ namespace NoProcChainsArtifact
         public override Sprite ArtifactDisabledIcon => ModAssets.AssetBundle.LoadAsset<Sprite>("NoProcChainsArtifactIcon_Disabled.png");
         public override void Init(ConfigFile config)
         {
-            CreateConfig(config);
             CreateLang();
+            CreateConfig(config);
             CreateArtifact();
             Hooks();
             if (RiskOfOptionsSupport.ModIsRunning)
@@ -69,6 +71,7 @@ namespace NoProcChainsArtifact
             AllowEquipmentProcs = config.Bind<bool>(ArtifactName, "Allow equipments to proc items", false, "Should damage from equipments be allowed to proc your on-hit items?");
             AllowShurikenProcs = config.Bind<bool>(ArtifactName, "Allow Shurikens to proc items", false, "Should damage from Shurikens be allowed to proc your on-hit items?");
             AllowEgoProcs = config.Bind<bool>(ArtifactName, "Allow Egocentrism to proc items", false, "Should damage from Egocentrism be allowed to proc your on-hit items?");
+            AllowFireworkProcs = config.Bind<bool>(ArtifactName, "Allow Fireworks to proc items", true, "Should damage from Fireworks be allowed to proc your on-hit items?");
             AllowGloopProcs = config.Bind<bool>(ArtifactName, "Allow Genesis Loop to proc items", true, "Should damage from Genesis Loop be allowed to proc your on-hit items?");
             AllowAspectPassiveProcs = config.Bind<bool>(ArtifactName, "Allow elite passives to proc items", true, "Should damage from perfected & malachite elites' passive attacks be allowed to proc your on-hit items? Twisted's passive can proc, but is internally seen as razorwire, so as far as I know I'm unable to let it proc with the artifact on.");
             AllowProcCrits = config.Bind<bool>(ArtifactName, "Allow item procs to crit", true, "Should damage from item procs be allowed to crit?");
@@ -103,40 +106,42 @@ namespace NoProcChainsArtifact
             Log.Debug($"rejected is {damageInfo.rejected}");
         }
 
-        private bool IsInflictorFromItem(string inflictor)
+        private bool IsInflictorFromItem(string inflictorName)
         {
-            switch (inflictor)
+            switch (inflictorName)
             {
                 // doing it via strings is dumb i know but loading the prefab and checking against directly that didn't work
                 // also im assuming checking the whole string is faster than .Contains with the actual inflictor name but idk
 
                 // items
-                case "IcicleAura(Clone) (UnityEngine.GameObject)":
-                case "DaggerProjectile(Clone) (UnityEngine.GameObject)":
-                case "RunicMeteorStrikeImpact(Clone) (UnityEngine.GameObject)":
+                case "IcicleAura(Clone)":
+                case "DaggerProjectile(Clone)":
+                case "RunicMeteorStrikeImpact(Clone)":
                     return true;
-                case "ShurikenProjectile(Clone) (UnityEngine.GameObject)":
+                case "FireworkProjectile(Clone)":
+                    return !AllowFireworkProcs.Value;
+                case "ShurikenProjectile(Clone)":
                     return !AllowShurikenProcs.Value;
                 // ego and gloop get separate configs because gloop proccing gives it a cool niche and ego prolly too busted with proc chains
-                case "LunarSunProjectile(Clone) (UnityEngine.GameObject)":
+                case "LunarSunProjectile(Clone)":
                     return !AllowEgoProcs.Value;
-                case "VagrantNovaItemBodyAttachment(Clone) (UnityEngine.GameObject)":
+                case "VagrantNovaItemBodyAttachment(Clone)":
                     return !AllowGloopProcs.Value;
 
                 // equipments
-                case "GoldGatController(Clone) (UnityEngine.GameObject)":
-                case "MissileProjectile(Clone) (UnityEngine.GameObject)":
-                case "BeamSphere(Clone) (UnityEngine.GameObject)":
-                case "MeteorStorm(Clone) (UnityEngine.GameObject)":
-                case "Sawmerang(Clone) (UnityEngine.GameObject)":
-                case "VendingMachineProjectile(Clone) (UnityEngine.GameObject)":
-                case "FireballVehicle(Clone) (UnityEngine.GameObject)":
+                case "GoldGatController(Clone)":
+                case "MissileProjectile(Clone)":
+                case "BeamSphere(Clone)":
+                case "MeteorStorm(Clone)":
+                case "Sawmerang(Clone)":
+                case "VendingMachineProjectile(Clone)":
+                case "FireballVehicle(Clone)":
                     return !AllowEquipmentProcs.Value;
 
                 // aspects
-                case "LunarMissileProjectile(Clone) (UnityEngine.GameObject)":
-                case "PoisonOrbProjectile(Clone) (UnityEngine.GameObject)":
-                case "PoisonStakeProjectile(Clone) (UnityEngine.GameObject)":
+                case "LunarMissileProjectile(Clone)":
+                case "PoisonOrbProjectile(Clone)":
+                case "PoisonStakeProjectile(Clone)":
                     return !AllowAspectPassiveProcs.Value;
 
                 default:
@@ -151,9 +156,15 @@ namespace NoProcChainsArtifact
                 orig(self, damageInfo);
                 return;
             }
+            // void fog and probably other things have no inflictor nor attacker and can cause errors if not checked for
+            if (damageInfo.inflictor == null && damageInfo.attacker == null)
+            {
+                orig(self, damageInfo);
+                return;
+            }
 
             /*
-             *  if a survivor shoots with hitscan, the inflictor is the attacker and the proc chain mask is 0
+             *  if a survivor shoots with hitscan, the inflictor and the attacker are the survivor and the proc chain mask is 0
              *  if a survivor fires a unique projectile from a skill, the inflictor isn't the attacker and the proc chain mask is still 0
              *  any item procs add to the proc chain mask, so when it's not 0 it's guranteed to be from an item hit that might be trying to chain
              *  some item procs (polylute) and some equips (capacitor) can have no inflictor, but some still do (atg, missle launcher)
@@ -166,7 +177,7 @@ namespace NoProcChainsArtifact
                 // stunning doesn't work if proc coefficient is 0 which means electric boomerang needs to be checked for or it'll never stun
                 if (damageInfo.inflictor && damageInfo.inflictor.ToString() == "StunAndPierceBoomerang(Clone) (UnityEngine.GameObject)")
                 {
-                    // idk if setting the coefficient to this low of a decimal will affect performance or not
+                    // no clue if setting the coefficient to this low of a decimal will affect performance or not
                     damageInfo.procCoefficient = 0.001f;
                     orig(self, damageInfo);
                     return;
@@ -182,30 +193,46 @@ namespace NoProcChainsArtifact
             }
             else if (damageInfo.inflictor == null)
             {
-                // void fog and probably other things have no inflictor nor attacker so that needs to be checked for or else damage isn't dealt
-                if (damageInfo.attacker == null)
-                {
-                    orig(self, damageInfo);
-                    return;
-                }
-
                 /*
-                 * checking for the following here as they have no inflictor and don't work properly with 0 coefficient:
-                 * 
-                 * glacial elite death explosions
-                 * nemesis enforcer minigun-stance secondary (why does this attack not have an inflictor???)
-                 * royal capacitor when the config allows it to proc
-                 * blood shrines
+                 * these survivor attacks don't have an inflictor for some reason:
+                 * miner secondary & third abilities (why do these attacks not have an inflictor???)
+                 * nemesis enforcer minigun-stance secondary (also no inflictor set for this)
                  */
-                if ((damageInfo.procCoefficient == 0.75 && damageInfo.damageType.damageTypeCombined == 131328)
-                    || (damageInfo.attacker.ToString() == "NemesisEnforcerBody(Clone) (UnityEngine.GameObject)" && damageInfo.damageType.damageTypeCombined == 131104)
-                    || (AllowEquipmentProcs.Value && damageInfo.damageType.damageTypeCombined == 131104)
-                    || damageInfo.attacker.ToString() == "ShrineBlood(Clone) (UnityEngine.GameObject)")
+                switch (damageInfo.attacker.name)
+                {
+                    case "NemesisEnforcerBody(Clone)":
+                        if (damageInfo.damageType.damageTypeCombined == 131104)
+                        {
+                            orig(self, damageInfo);
+                            return;
+                        }
+                        break;
+                    case "MinerBody(Clone)":
+                        switch (damageInfo.damageType.damageTypeCombined)
+                        {
+                            case 131104:
+                            case 131072:
+                                orig(self, damageInfo);
+                                return;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                /*
+                 * these damage sources don't work properly with 0 coefficient:
+                 * blood shrines (no damage)
+                 * glacial elite death explosions (no freeze)
+                 * capacitor works properly with 0 coefficient it just doesn't have an inflictor
+                 */
+                if ((AllowEquipmentProcs.Value && damageInfo.damageType.damageTypeCombined == 131104)
+                    || (damageInfo.procCoefficient == 0.75 && damageInfo.damageType.damageTypeCombined == 131328)
+                    || damageInfo.attacker.name == "ShrineBlood(Clone)")
                 {
                     orig(self, damageInfo);
                     return;
                 }
-                // checking for no crit procs here might affect survivor abilities but i guess we'll find out eventually
+                // checking for no crit procs here might affect survivor abilities
                 if (!AllowProcCrits.Value)
                 {
                     damageInfo.crit = false;
@@ -215,10 +242,11 @@ namespace NoProcChainsArtifact
                 orig(self, damageInfo);
                 return;
             }
-            else if (IsInflictorFromItem(damageInfo.inflictor.ToString()))
+            else if (IsInflictorFromItem(damageInfo.inflictor.name))
             {
                 damageInfo.procCoefficient = 0;
             }
+
             orig(self, damageInfo);
             return;
         }
