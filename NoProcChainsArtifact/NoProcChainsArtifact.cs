@@ -9,7 +9,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using System.Linq;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using UnityEngine.AddressableAssets;
+using EntityStates.BrotherMonster;
 
 namespace NoProcChainsArtifact
 {
@@ -23,8 +26,8 @@ namespace NoProcChainsArtifact
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "NoProcChainsArtifact";
-        public const string PluginVersion = "1.0.5";
-        public List<ArtifactBase> Artifacts = new List<ArtifactBase>();
+        public const string PluginVersion = "1.1.0";
+        public List<ArtifactBase> Artifacts = [];
 
         public void Awake()
         {
@@ -71,15 +74,117 @@ namespace NoProcChainsArtifact
             AllowEquipmentProcs = config.Bind<bool>(ArtifactName, "Allow equipments to proc items", false, "Should damage from equipments be allowed to proc your on-hit items?");
             AllowShurikenProcs = config.Bind<bool>(ArtifactName, "Allow Shurikens to proc items", false, "Should damage from Shurikens be allowed to proc your on-hit items?");
             AllowEgoProcs = config.Bind<bool>(ArtifactName, "Allow Egocentrism to proc items", false, "Should damage from Egocentrism be allowed to proc your on-hit items?");
-            AllowFireworkProcs = config.Bind<bool>(ArtifactName, "Allow Fireworks to proc items", true, "Should damage from Fireworks be allowed to proc your on-hit items?");
+            AllowFireworkProcs = config.Bind<bool>(ArtifactName, "Allow Fireworks to proc items", false, "Should damage from Fireworks be allowed to proc your on-hit items?");
             AllowGloopProcs = config.Bind<bool>(ArtifactName, "Allow Genesis Loop to proc items", true, "Should damage from Genesis Loop be allowed to proc your on-hit items?");
             AllowAspectPassiveProcs = config.Bind<bool>(ArtifactName, "Allow elite passives to proc items", true, "Should damage from perfected & malachite elites' passive attacks be allowed to proc your on-hit items? Twisted's passive can proc, but is internally seen as razorwire, so as far as I know I'm unable to let it proc with the artifact on.");
             AllowProcCrits = config.Bind<bool>(ArtifactName, "Allow item procs to crit", true, "Should damage from item procs be allowed to crit?");
         }
         public override void Hooks()
         {
-            // ty old InfiniteProcChains mod for a reference on how to do this stuff
             On.RoR2.HealthComponent.TakeDamage += HealthComponent_OnTakeDamage;
+            // need to IL patch some vanilla survivor skills so they actually have an inflictor and can proc items
+            IL.RoR2.Orbs.GenericDamageOrb.OnArrival += IL_GenericDamageOrb_OnArrival;
+            IL.EntityStates.Bandit2.StealthMode.FireSmokebomb += IL_Bandit2_StealthMode_FireSmokebomb;
+            IL.EntityStates.Toolbot.ToolbotDashImpact.OnEnter += IL_Toolbot_ToolbotDashImpact_OnEnter;
+            IL.EntityStates.Croco.Disease.OnEnter += IL_Croco_Disease_OnEnter;
+        }
+
+        private void IL_Croco_Disease_OnEnter(ILContext il)
+        {
+            ILCursor c = new(il);
+            if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdarg(0),
+                    x => x.MatchCall<EntityStates.EntityState>("get_gameObject"),
+                    x => x.MatchStfld<RoR2.Orbs.LightningOrb>("attacker")
+                ))
+            {
+                c.Emit(OpCodes.Ldloc_S, (byte)4);
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit<EntityStates.EntityState>(OpCodes.Call, "get_gameObject");
+                c.Emit<RoR2.Orbs.LightningOrb>(OpCodes.Stfld, "inflictor");
+
+                Log.Warning($"cursor is {c}");
+                Log.Warning($"il is {il}");
+            }
+            else
+            {
+                Log.Error("COULD NOT IL HOOK ACRID EPIDEMIC!");
+                Log.Error($"cursor is {c}");
+                Log.Error($"il is {il}");
+            }
+        }
+
+        private void IL_Toolbot_ToolbotDashImpact_OnEnter(ILContext il)
+        {
+            // the first hit from the dash impact works but not the 2nd hit???
+            ILCursor c = new(il);
+            if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchCall<EntityStates.EntityState>("get_gameObject"),
+                    x => x.MatchStfld<DamageInfo>("attacker")
+                ))
+            {
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit<EntityStates.EntityState>(OpCodes.Call, "get_gameObject");
+                c.Emit<DamageInfo>(OpCodes.Stfld, "inflictor");
+            }
+            else
+            {
+                Log.Error("COULD NOT IL HOOK MUL-T DASH IMPACT!");
+                Log.Error($"cursor is {c}");
+                Log.Error($"il is {il}");
+            }
+        }
+
+        private void IL_GenericDamageOrb_OnArrival(ILContext il)
+        {
+            // this is for huntress's primaries and secondaries
+            // orbs never have an inflictor but i don't think this hurts anything
+            ILCursor c = new(il);
+            if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdloc(1),
+                    x => x.MatchLdnull(),
+                    x => x.MatchStfld<DamageInfo>("inflictor")
+                ))
+            {
+                // removing null and inserting attacker to be set as inflictor
+                c.Index -= 2;
+                c.Remove();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit<RoR2.Orbs.GenericDamageOrb>(OpCodes.Ldfld, "attacker");
+            }
+            else
+            {
+                Log.Error("COULD NOT IL HOOK GENERICDAMAGEORB_ONARRIVAL!");
+                Log.Error($"cursor is {c}");
+                Log.Error($"il is {il}");
+            }
+        }
+
+        private void IL_Bandit2_StealthMode_FireSmokebomb(ILContext il)
+        {
+            ILLabel label = null;
+            ILCursor c = new(il);
+            if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdarg(0),
+                    x => x.MatchCallOrCallvirt<EntityStates.EntityState>("get_isAuthority"),
+                    x => x.MatchBrfalse(out label),
+                    x => x.MatchNewobj<BlastAttack>()
+                ))
+            {
+                // pretty much the game's IL for setting the blastattack's attacker but for inflictor
+                c.Emit(OpCodes.Dup);
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit<EntityStates.EntityState>(OpCodes.Call, "get_gameObject");
+                c.Emit<BlastAttack>(OpCodes.Stfld, "inflictor");
+                return;
+            }
+            else
+            {
+                Log.Error("COULD NOT IL HOOK BANDIT SMOKEBOMB!");
+                Log.Error($"cursor is {c}");
+                Log.Error($"il is {il}");
+            }
         }
 
         private void LogDamageInfo(DamageInfo damageInfo)
@@ -108,49 +213,42 @@ namespace NoProcChainsArtifact
 
         private bool IsInflictorFromItem(string inflictorName)
         {
-            switch (inflictorName)
+            return inflictorName switch
             {
                 // doing it via strings is dumb i know but loading the prefab and checking against directly that didn't work
                 // also im assuming checking the whole string is faster than .Contains with the actual inflictor name but idk
-
                 // items
-                case "IcicleAura(Clone)":
-                case "DaggerProjectile(Clone)":
-                case "RunicMeteorStrikeImpact(Clone)":
-                    return true;
-                case "FireworkProjectile(Clone)":
-                    return !AllowFireworkProcs.Value;
-                case "ShurikenProjectile(Clone)":
-                    return !AllowShurikenProcs.Value;
+                "IcicleAura(Clone)" or
+                "DaggerProjectile(Clone)" or
+                "RunicMeteorStrikeImpact(Clone)" => true,
+                "FireworkProjectile(Clone)" => !AllowFireworkProcs.Value,
+                "ShurikenProjectile(Clone)" => !AllowShurikenProcs.Value,
                 // ego and gloop get separate configs because gloop proccing gives it a cool niche and ego prolly too busted with proc chains
-                case "LunarSunProjectile(Clone)":
-                    return !AllowEgoProcs.Value;
-                case "VagrantNovaItemBodyAttachment(Clone)":
-                    return !AllowGloopProcs.Value;
+                "LunarSunProjectile(Clone)" => !AllowEgoProcs.Value,
+                "VagrantNovaItemBodyAttachment(Clone)" => !AllowGloopProcs.Value,
 
                 // equipments
-                case "GoldGatController(Clone)":
-                case "MissileProjectile(Clone)":
-                case "BeamSphere(Clone)":
-                case "MeteorStorm(Clone)":
-                case "Sawmerang(Clone)":
-                case "VendingMachineProjectile(Clone)":
-                case "FireballVehicle(Clone)":
-                    return !AllowEquipmentProcs.Value;
+                "GoldGatController(Clone)" or
+                "MissileProjectile(Clone)" or
+                "BeamSphere(Clone)" or
+                "MeteorStorm(Clone)" or
+                "Sawmerang(Clone)" or
+                "VendingMachineProjectile(Clone)" or
+                "FireballVehicle(Clone)" => !AllowEquipmentProcs.Value,
 
                 // aspects
-                case "LunarMissileProjectile(Clone)":
-                case "PoisonOrbProjectile(Clone)":
-                case "PoisonStakeProjectile(Clone)":
-                    return !AllowAspectPassiveProcs.Value;
+                "LunarMissileProjectile(Clone)" or
+                "PoisonOrbProjectile(Clone)" or
+                "PoisonStakeProjectile(Clone)" => !AllowAspectPassiveProcs.Value,
 
-                default:
-                    return false;
-            }
+                _ => false,
+            };
         }
 
         private void HealthComponent_OnTakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)
         {
+            // ty old InfiniteProcChains mod for a reference on how to do this stuff
+
             if (!ArtifactEnabled)
             {
                 orig(self, damageInfo);
@@ -164,14 +262,14 @@ namespace NoProcChainsArtifact
             }
 
             /*
-             *  if a survivor shoots with hitscan, the inflictor and the attacker are the survivor and the proc chain mask is 0
-             *  if a survivor fires a unique projectile from a skill, the inflictor isn't the attacker and the proc chain mask is still 0
-             *  any item procs add to the proc chain mask, so when it's not 0 it's guranteed to be from an item hit that might be trying to chain
+             *  if a survivor shoots with hitscan, the inflictor and the attacker are both the survivor and the proc chain mask is 0
+             *  if a survivor fires a unique projectile from a skill, the inflictor isn't the survivor but the attacker is and the proc chain mask is still 0
+             *  any item procs add to the proc chain mask when they hit, so when the procchainmask is not 0 it's guranteed to be from an item hit
              *  some item procs (polylute) and some equips (capacitor) can have no inflictor, but some still do (atg, missle launcher)
-             *  missile launcher has a missle inflictor like atg, but no procchainmask since it's an initial attack unlike atg
+             *  missile launcher has a missle inflictor like atg, but has no procchainmask since it doesn't add itself to the mask
              */
 
-            //LogDamageInfo(damageInfo);
+            LogDamageInfo(damageInfo);
             if (damageInfo.procChainMask.mask > 0)
             {
                 // stunning doesn't work if proc coefficient is 0 which means electric boomerang needs to be checked for or it'll never stun
