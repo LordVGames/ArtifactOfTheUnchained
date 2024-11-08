@@ -12,7 +12,6 @@ using System.Linq;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using UnityEngine.AddressableAssets;
-using EntityStates.BrotherMonster;
 
 namespace NoProcChainsArtifact
 {
@@ -84,21 +83,20 @@ namespace NoProcChainsArtifact
             On.RoR2.HealthComponent.TakeDamage += HealthComponent_OnTakeDamage;
             // need to IL patch some vanilla survivor skills so they actually have an inflictor and can proc items
             IL.RoR2.Orbs.GenericDamageOrb.OnArrival += IL_GenericDamageOrb_OnArrival;
+            IL.EntityStates.Huntress.HuntressWeapon.ThrowGlaive.FireOrbGlaive += IL_Huntress_ThrowGlaive_FireOrbGlaive;
             IL.EntityStates.Bandit2.StealthMode.FireSmokebomb += IL_Bandit2_StealthMode_FireSmokebomb;
             IL.EntityStates.Toolbot.ToolbotDashImpact.OnEnter += IL_Toolbot_ToolbotDashImpact_OnEnter;
-            IL.EntityStates.Croco.Disease.OnEnter += IL_Croco_Disease_OnEnter;
         }
 
-        private void IL_Croco_Disease_OnEnter(ILContext il)
+        private void IL_Huntress_ThrowGlaive_FireOrbGlaive(ILContext il)
         {
             ILCursor c = new(il);
             if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdarg(0),
                     x => x.MatchCall<EntityStates.EntityState>("get_gameObject"),
                     x => x.MatchStfld<RoR2.Orbs.LightningOrb>("attacker")
                 ))
             {
-                c.Emit(OpCodes.Ldloc_S, (byte)4);
+                c.Emit(OpCodes.Ldloc_0);
                 c.Emit(OpCodes.Ldarg_0);
                 c.Emit<EntityStates.EntityState>(OpCodes.Call, "get_gameObject");
                 c.Emit<RoR2.Orbs.LightningOrb>(OpCodes.Stfld, "inflictor");
@@ -108,7 +106,32 @@ namespace NoProcChainsArtifact
             }
             else
             {
-                Log.Error("COULD NOT IL HOOK ACRID EPIDEMIC!");
+                Log.Error("COULD NOT IL HOOK HUNTRESS FIREORBGLAIVE!");
+                Log.Error($"cursor is {c}");
+                Log.Error($"il is {il}");
+            }
+        }
+
+        private void IL_GenericDamageOrb_OnArrival(ILContext il)
+        {
+            // this is for huntress' primaries
+            // this also affects plasma shrimp but i don't think this hurts anything since it adds itself to the proc mask anyways
+            ILCursor c = new(il);
+            if (c.TryGotoNext(MoveType.After,
+                    x => x.MatchLdloc(1),
+                    x => x.MatchLdnull(),
+                    x => x.MatchStfld<DamageInfo>("inflictor")
+                ))
+            {
+                // replacing null with attacker to be set as inflictor
+                c.Index -= 2;
+                c.Remove();
+                c.Emit(OpCodes.Ldarg_0);
+                c.Emit<RoR2.Orbs.GenericDamageOrb>(OpCodes.Ldfld, "attacker");
+            }
+            else
+            {
+                Log.Error("COULD NOT IL HOOK GENERICDAMAGEORB_ONARRIVAL!");
                 Log.Error($"cursor is {c}");
                 Log.Error($"il is {il}");
             }
@@ -116,7 +139,7 @@ namespace NoProcChainsArtifact
 
         private void IL_Toolbot_ToolbotDashImpact_OnEnter(ILContext il)
         {
-            // the first hit from the dash impact works but not the 2nd hit???
+            // the second hit from the dash impact doesn't have an inflictor but the first hit does???
             ILCursor c = new(il);
             if (c.TryGotoNext(MoveType.After,
                     x => x.MatchCall<EntityStates.EntityState>("get_gameObject"),
@@ -131,31 +154,6 @@ namespace NoProcChainsArtifact
             else
             {
                 Log.Error("COULD NOT IL HOOK MUL-T DASH IMPACT!");
-                Log.Error($"cursor is {c}");
-                Log.Error($"il is {il}");
-            }
-        }
-
-        private void IL_GenericDamageOrb_OnArrival(ILContext il)
-        {
-            // this is for huntress's primaries and secondaries
-            // orbs never have an inflictor but i don't think this hurts anything
-            ILCursor c = new(il);
-            if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdloc(1),
-                    x => x.MatchLdnull(),
-                    x => x.MatchStfld<DamageInfo>("inflictor")
-                ))
-            {
-                // removing null and inserting attacker to be set as inflictor
-                c.Index -= 2;
-                c.Remove();
-                c.Emit(OpCodes.Ldarg_0);
-                c.Emit<RoR2.Orbs.GenericDamageOrb>(OpCodes.Ldfld, "attacker");
-            }
-            else
-            {
-                Log.Error("COULD NOT IL HOOK GENERICDAMAGEORB_ONARRIVAL!");
                 Log.Error($"cursor is {c}");
                 Log.Error($"il is {il}");
             }
@@ -269,7 +267,7 @@ namespace NoProcChainsArtifact
              *  missile launcher has a missle inflictor like atg, but has no procchainmask since it doesn't add itself to the mask
              */
 
-            LogDamageInfo(damageInfo);
+            //LogDamageInfo(damageInfo);
             if (damageInfo.procChainMask.mask > 0)
             {
                 // stunning doesn't work if proc coefficient is 0 which means electric boomerang needs to be checked for or it'll never stun
@@ -293,11 +291,27 @@ namespace NoProcChainsArtifact
             {
                 /*
                  * these survivor attacks don't have an inflictor for some reason:
-                 * miner secondary & third abilities (why do these attacks not have an inflictor???)
-                 * nemesis enforcer minigun-stance secondary (also no inflictor set for this)
+                 * acrid epidemic's spreading hits (it's here since i couldn't find a good way to il hook and set inflictor)
+                 * ss2 executioner's special
+                 * nemesis enforcer's minigun-stance secondary
+                 * miner's secondary & third abilities
                  */
                 switch (damageInfo.attacker.name)
                 {
+                    case "CrocoBody(Clone)":
+                        if (damageInfo.damageType.damageTypeCombined == 4096)
+                        {
+                            orig(self, damageInfo);
+                            return;
+                        }
+                        break;
+                    case "Executioner2Body(Clone)":
+                        if (damageInfo.damageType.damageTypeCombined == 393216)
+                        {
+                            orig(self, damageInfo);
+                            return;
+                        }
+                        break;
                     case "NemesisEnforcerBody(Clone)":
                         if (damageInfo.damageType.damageTypeCombined == 131104)
                         {
