@@ -8,6 +8,7 @@ There are also some items whose ability to proc your items I left configurable:
 - All damaging equipment items (off by default)
 - Shuriken (off by default)
 - Egocentrism (off by default)
+- Fireworks (off by default)
 - Genesis Loop (on by default)
 - Malachite & Perfected elite passive attacks (on by default)
 
