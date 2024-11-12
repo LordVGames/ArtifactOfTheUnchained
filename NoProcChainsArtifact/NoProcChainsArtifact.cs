@@ -25,7 +25,7 @@ namespace NoProcChainsArtifact
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "NoProcChainsArtifact";
-        public const string PluginVersion = "1.1.0";
+        public const string PluginVersion = "1.1.2";
         public List<ArtifactBase> Artifacts = [];
 
         public void Awake()
@@ -88,6 +88,7 @@ namespace NoProcChainsArtifact
             IL.EntityStates.Toolbot.ToolbotDashImpact.OnEnter += IL_Toolbot_ToolbotDashImpact_OnEnter;
         }
 
+        #region IL Hooks
         private void IL_Huntress_ThrowGlaive_FireOrbGlaive(ILContext il)
         {
             ILCursor c = new(il);
@@ -184,6 +185,7 @@ namespace NoProcChainsArtifact
                 Log.Error($"il is {il}");
             }
         }
+        #endregion
 
         private void LogDamageInfo(DamageInfo damageInfo)
         {
@@ -218,7 +220,10 @@ namespace NoProcChainsArtifact
                 // items
                 "IcicleAura(Clone)" or
                 "DaggerProjectile(Clone)" or
-                "RunicMeteorStrikeImpact(Clone)" => true,
+                "RunicMeteorStrikeImpact(Clone)" or
+                "LampBulletPlayer(Clone)" or
+                "ColossalKnurlFistProjectile(Clone)" or
+                "IfritPylonPlayerBody(Clone)" => true,
                 "FireworkProjectile(Clone)" => !AllowFireworkProcs.Value,
                 "ShurikenProjectile(Clone)" => !AllowShurikenProcs.Value,
                 // ego and gloop get separate configs because gloop proccing gives it a cool niche and ego prolly too busted with proc chains
@@ -295,6 +300,9 @@ namespace NoProcChainsArtifact
                  * ss2 executioner's special
                  * nemesis enforcer's minigun-stance secondary
                  * miner's secondary & third abilities
+                 * 
+                 * also checking for sulfur pods here since they don't debuff you with no proc coefficient
+                 * yet aqueducts tar pots still work
                  */
                 switch (damageInfo.attacker.name)
                 {
@@ -328,6 +336,9 @@ namespace NoProcChainsArtifact
                                 return;
                         }
                         break;
+                    case "SulfurPodBody(Clone)":
+                        orig(self, damageInfo);
+                        return;
                     default:
                         break;
                 }
