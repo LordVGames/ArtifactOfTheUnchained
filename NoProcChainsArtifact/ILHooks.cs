@@ -26,9 +26,6 @@ namespace NoProcChainsArtifact
                 c.Emit(OpCodes.Ldarg_0);
                 c.Emit<EntityStates.EntityState>(OpCodes.Call, "get_gameObject");
                 c.Emit<RoR2.Orbs.LightningOrb>(OpCodes.Stfld, "inflictor");
-
-                Log.Warning($"cursor is {c}");
-                Log.Warning($"il is {il}");
             }
             else
             {
