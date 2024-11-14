@@ -9,8 +9,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using System.Linq;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
 using UnityEngine.AddressableAssets;
 
 namespace NoProcChainsArtifact
@@ -52,6 +50,8 @@ namespace NoProcChainsArtifact
         public static ConfigEntry<bool> AllowGloopProcs;
         public static ConfigEntry<bool> AllowAspectPassiveProcs;
         public static ConfigEntry<bool> AllowProcCrits;
+        // this needs to be a float because the ingame number is one
+        public static float tinyProcCoefficient = 0.001f;
         public override string ArtifactLangTokenName => "NO_PROC_CHAINS";
         public override string ArtifactName => "Artifact of the Unchained";
         public override string ArtifactDescription => "Almost all item effects cannot proc your on-hit item effects for you.";
@@ -82,110 +82,8 @@ namespace NoProcChainsArtifact
         {
             On.RoR2.HealthComponent.TakeDamage += HealthComponent_OnTakeDamage;
             // need to IL patch some vanilla survivor skills so they actually have an inflictor and can proc items
-            IL.RoR2.Orbs.GenericDamageOrb.OnArrival += IL_GenericDamageOrb_OnArrival;
-            IL.EntityStates.Huntress.HuntressWeapon.ThrowGlaive.FireOrbGlaive += IL_Huntress_ThrowGlaive_FireOrbGlaive;
-            IL.EntityStates.Bandit2.StealthMode.FireSmokebomb += IL_Bandit2_StealthMode_FireSmokebomb;
-            IL.EntityStates.Toolbot.ToolbotDashImpact.OnEnter += IL_Toolbot_ToolbotDashImpact_OnEnter;
+            ILHooks.SetupILHooks();
         }
-
-        #region IL Hooks
-        private void IL_Huntress_ThrowGlaive_FireOrbGlaive(ILContext il)
-        {
-            ILCursor c = new(il);
-            if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchCall<EntityStates.EntityState>("get_gameObject"),
-                    x => x.MatchStfld<RoR2.Orbs.LightningOrb>("attacker")
-                ))
-            {
-                c.Emit(OpCodes.Ldloc_0);
-                c.Emit(OpCodes.Ldarg_0);
-                c.Emit<EntityStates.EntityState>(OpCodes.Call, "get_gameObject");
-                c.Emit<RoR2.Orbs.LightningOrb>(OpCodes.Stfld, "inflictor");
-
-                Log.Warning($"cursor is {c}");
-                Log.Warning($"il is {il}");
-            }
-            else
-            {
-                Log.Error("COULD NOT IL HOOK HUNTRESS FIREORBGLAIVE!");
-                Log.Error($"cursor is {c}");
-                Log.Error($"il is {il}");
-            }
-        }
-
-        private void IL_GenericDamageOrb_OnArrival(ILContext il)
-        {
-            // this is for huntress' primaries
-            // this also affects plasma shrimp but i don't think this hurts anything since it adds itself to the proc mask anyways
-            ILCursor c = new(il);
-            if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdloc(1),
-                    x => x.MatchLdnull(),
-                    x => x.MatchStfld<DamageInfo>("inflictor")
-                ))
-            {
-                // replacing null with attacker to be set as inflictor
-                c.Index -= 2;
-                c.Remove();
-                c.Emit(OpCodes.Ldarg_0);
-                c.Emit<RoR2.Orbs.GenericDamageOrb>(OpCodes.Ldfld, "attacker");
-            }
-            else
-            {
-                Log.Error("COULD NOT IL HOOK GENERICDAMAGEORB_ONARRIVAL!");
-                Log.Error($"cursor is {c}");
-                Log.Error($"il is {il}");
-            }
-        }
-
-        private void IL_Toolbot_ToolbotDashImpact_OnEnter(ILContext il)
-        {
-            // the second hit from the dash impact doesn't have an inflictor but the first hit does???
-            ILCursor c = new(il);
-            if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchCall<EntityStates.EntityState>("get_gameObject"),
-                    x => x.MatchStfld<DamageInfo>("attacker")
-                ))
-            {
-                c.Emit(OpCodes.Dup);
-                c.Emit(OpCodes.Ldarg_0);
-                c.Emit<EntityStates.EntityState>(OpCodes.Call, "get_gameObject");
-                c.Emit<DamageInfo>(OpCodes.Stfld, "inflictor");
-            }
-            else
-            {
-                Log.Error("COULD NOT IL HOOK MUL-T DASH IMPACT!");
-                Log.Error($"cursor is {c}");
-                Log.Error($"il is {il}");
-            }
-        }
-
-        private void IL_Bandit2_StealthMode_FireSmokebomb(ILContext il)
-        {
-            ILLabel label = null;
-            ILCursor c = new(il);
-            if (c.TryGotoNext(MoveType.After,
-                    x => x.MatchLdarg(0),
-                    x => x.MatchCallOrCallvirt<EntityStates.EntityState>("get_isAuthority"),
-                    x => x.MatchBrfalse(out label),
-                    x => x.MatchNewobj<BlastAttack>()
-                ))
-            {
-                // pretty much the game's IL for setting the blastattack's attacker but for inflictor
-                c.Emit(OpCodes.Dup);
-                c.Emit(OpCodes.Ldarg_0);
-                c.Emit<EntityStates.EntityState>(OpCodes.Call, "get_gameObject");
-                c.Emit<BlastAttack>(OpCodes.Stfld, "inflictor");
-                return;
-            }
-            else
-            {
-                Log.Error("COULD NOT IL HOOK BANDIT SMOKEBOMB!");
-                Log.Error($"cursor is {c}");
-                Log.Error($"il is {il}");
-            }
-        }
-        #endregion
 
         private void LogDamageInfo(DamageInfo damageInfo)
         {
@@ -211,41 +109,153 @@ namespace NoProcChainsArtifact
             Log.Debug($"rejected is {damageInfo.rejected}");
         }
 
-        private bool IsInflictorFromItem(string inflictorName)
+        private void SetCoefficientIfFromItem(DamageInfo damageInfo)
         {
-            return inflictorName switch
+            switch (damageInfo.inflictor.name)
             {
-                // doing it via strings is dumb i know but loading the prefab and checking against directly that didn't work
-                // also im assuming checking the whole string is faster than .Contains with the actual inflictor name but idk
-                // items
-                "IcicleAura(Clone)" or
-                "DaggerProjectile(Clone)" or
-                "RunicMeteorStrikeImpact(Clone)" or
-                "LampBulletPlayer(Clone)" or
-                "ColossalKnurlFistProjectile(Clone)" or
-                "IfritPylonPlayerBody(Clone)" => true,
-                "FireworkProjectile(Clone)" => !AllowFireworkProcs.Value,
-                "ShurikenProjectile(Clone)" => !AllowShurikenProcs.Value,
+                #region items
+                case "StunAndPierceBoomerang(Clone)":
+                    damageInfo.procCoefficient = tinyProcCoefficient;
+                    break;
+                case "IcicleAura(Clone)":
+                case "DaggerProjectile(Clone)":
+                case "RunicMeteorStrikeImpact(Clone)":
+                // ss2
+                case "LampBulletPlayer(Clone)":
+                // enemiesreturns
+                case "IfritPylonPlayerBody(Clone)":
+                // sivscontent
+                case "MushroomWard(Clone)":
+                case "ThunderAuraStrike(Clone)":
+                case "LunarShockwave(Clone)":
+                    damageInfo.procCoefficient = 0;
+                    break;
+
+                case "FireworkProjectile(Clone)":
+                    if (!AllowFireworkProcs.Value)
+                    {
+                        damageInfo.procCoefficient = 0;
+                    }
+                    break;
+                case "ShurikenProjectile(Clone)":
+                    if (!AllowShurikenProcs.Value)
+                    {
+                        damageInfo.procCoefficient = 0;
+                    }
+                    break;
                 // ego and gloop get separate configs because gloop proccing gives it a cool niche and ego prolly too busted with proc chains
-                "LunarSunProjectile(Clone)" => !AllowEgoProcs.Value,
-                "VagrantNovaItemBodyAttachment(Clone)" => !AllowGloopProcs.Value,
+                case "LunarSunProjectile(Clone)":
+                    if (!AllowEgoProcs.Value)
+                    {
+                        damageInfo.procCoefficient = 0;
+                    }
+                    break;
+                case "VagrantNovaItemBodyAttachment(Clone)":
+                    if (!AllowGloopProcs.Value)
+                    {
+                        damageInfo.procCoefficient = 0;
+                    }
+                    break;
+                #endregion
 
-                // equipments
-                "GoldGatController(Clone)" or
-                "MissileProjectile(Clone)" or
-                "BeamSphere(Clone)" or
-                "MeteorStorm(Clone)" or
-                "Sawmerang(Clone)" or
-                "VendingMachineProjectile(Clone)" or
-                "FireballVehicle(Clone)" => !AllowEquipmentProcs.Value,
+                #region equipments
+                case "GoldGatController(Clone)":
+                case "MissileProjectile(Clone)":
+                case "BeamSphere(Clone)":
+                case "MeteorStorm(Clone)":
+                case "VendingMachineProjectile(Clone)":
+                case "FireballVehicle(Clone)":
+                /*
+                 * i would give sawmerang a really low proc coeff but bleed duration scales off of that too
+                 * so even though it's guranteed to apply it does one tick then goes away
+                 * its either all procs or no procs
+                 * thanks hopoo
+                 */
+                case "Sawmerang(Clone)":
+                    if (!AllowEquipmentProcs.Value)
+                    {
+                        damageInfo.procCoefficient = 0;
+                    }
+                    break;
+                    
+                #region aspects
+                case "LunarMissileProjectile(Clone)":
+                case "PoisonOrbProjectile(Clone)":
+                case "PoisonStakeProjectile(Clone)":
+                    if (!AllowAspectPassiveProcs.Value)
+                    {
+                        // i think this also makes malachite debuff nonexistant too
+                        damageInfo.procCoefficient = 0;
+                    }
+                    break;
+                #endregion
+                #endregion
+            }
+        }
 
-                // aspects
-                "LunarMissileProjectile(Clone)" or
-                "PoisonOrbProjectile(Clone)" or
-                "PoisonStakeProjectile(Clone)" => !AllowAspectPassiveProcs.Value,
-
-                _ => false,
-            };
+        private bool IsDamageBrokenWithoutInflictor(DamageInfo damageInfo)
+        {
+            /*
+             * these survivor attacks don't have an inflictor and break because of the artifact:
+             * acrid epidemic's spreading hits (it's here since i couldn't find a good way to il hook and set inflictor)
+             * ss2 executioner's special
+             * nemesis enforcer's minigun-stance secondary
+             * miner's secondary & third abilities
+             * 
+             * also checking for sulfur pods here since they don't debuff you with no proc coefficient
+             * yet aqueducts tar pots still work
+             * and also blood shrines because they deal no damage with 0 coefficient (????)
+            */
+            switch (damageInfo.attacker.name)
+            {
+                case "CrocoBody(Clone)":
+                    if (damageInfo.damageType.damageTypeCombined == 4096)
+                    {
+                        return true;
+                    }
+                    break;
+                case "Executioner2Body(Clone)":
+                    if (damageInfo.damageType.damageTypeCombined == 393216)
+                    {
+                        return true;
+                    }
+                    break;
+                case "NemesisEnforcerBody(Clone)":
+                    if (damageInfo.damageType.damageTypeCombined == 131104)
+                    {
+                        return true;
+                    }
+                    break;
+                case "MinerBody(Clone)":
+                    switch (damageInfo.damageType.damageTypeCombined)
+                    {
+                        case 131104:
+                        case 131072:
+                            return true;
+                    }
+                    break;
+                case "SulfurPodBody(Clone)":
+                case "ShrineBlood(Clone)":
+                    return true;
+            }
+            switch (damageInfo.damageType.damageTypeCombined)
+            {
+                // capacitor has no inflictor so even when config allows it it still won't proc
+                case 131104:
+                    if (AllowEquipmentProcs.Value)
+                    {
+                        return true;
+                    }
+                    break;
+                // glacial death bubble won't with with 0 coefficient
+                case 131328:
+                    if (damageInfo.procCoefficient == 0.75)
+                    {
+                        return true;
+                    }
+                    break;
+            }
+            return false;
         }
 
         private void HealthComponent_OnTakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)
@@ -271,18 +281,14 @@ namespace NoProcChainsArtifact
              *  some item procs (polylute) and some equips (capacitor) can have no inflictor, but some still do (atg, missle launcher)
              *  missile launcher has a missle inflictor like atg, but has no procchainmask since it doesn't add itself to the mask
              */
-
-            //LogDamageInfo(damageInfo);
+#if DEBUG
+            LogDamageInfo(damageInfo);
+#endif
             if (damageInfo.procChainMask.mask > 0)
             {
-                // stunning doesn't work if proc coefficient is 0 which means electric boomerang needs to be checked for or it'll never stun
-                if (damageInfo.inflictor && damageInfo.inflictor.ToString() == "StunAndPierceBoomerang(Clone) (UnityEngine.GameObject)")
-                {
-                    // no clue if setting the coefficient to this low of a decimal will affect performance or not
-                    damageInfo.procCoefficient = 0.001f;
-                    orig(self, damageInfo);
-                    return;
-                }
+#if DEBUG
+                Log.Warning($"ITEM TRYING TO PROC CHAIN DETECTED");
+#endif
                 if (!AllowProcCrits.Value)
                 {
                     damageInfo.crit = false;
@@ -294,67 +300,14 @@ namespace NoProcChainsArtifact
             }
             else if (damageInfo.inflictor == null)
             {
-                /*
-                 * these survivor attacks don't have an inflictor for some reason:
-                 * acrid epidemic's spreading hits (it's here since i couldn't find a good way to il hook and set inflictor)
-                 * ss2 executioner's special
-                 * nemesis enforcer's minigun-stance secondary
-                 * miner's secondary & third abilities
-                 * 
-                 * also checking for sulfur pods here since they don't debuff you with no proc coefficient
-                 * yet aqueducts tar pots still work
-                 */
-                switch (damageInfo.attacker.name)
-                {
-                    case "CrocoBody(Clone)":
-                        if (damageInfo.damageType.damageTypeCombined == 4096)
-                        {
-                            orig(self, damageInfo);
-                            return;
-                        }
-                        break;
-                    case "Executioner2Body(Clone)":
-                        if (damageInfo.damageType.damageTypeCombined == 393216)
-                        {
-                            orig(self, damageInfo);
-                            return;
-                        }
-                        break;
-                    case "NemesisEnforcerBody(Clone)":
-                        if (damageInfo.damageType.damageTypeCombined == 131104)
-                        {
-                            orig(self, damageInfo);
-                            return;
-                        }
-                        break;
-                    case "MinerBody(Clone)":
-                        switch (damageInfo.damageType.damageTypeCombined)
-                        {
-                            case 131104:
-                            case 131072:
-                                orig(self, damageInfo);
-                                return;
-                        }
-                        break;
-                    case "SulfurPodBody(Clone)":
-                        orig(self, damageInfo);
-                        return;
-                    default:
-                        break;
-                }
-                /*
-                 * these damage sources don't work properly with 0 coefficient:
-                 * blood shrines (no damage)
-                 * glacial elite death explosions (no freeze)
-                 * capacitor works properly with 0 coefficient it just doesn't have an inflictor
-                 */
-                if ((AllowEquipmentProcs.Value && damageInfo.damageType.damageTypeCombined == 131104)
-                    || (damageInfo.procCoefficient == 0.75 && damageInfo.damageType.damageTypeCombined == 131328)
-                    || damageInfo.attacker.name == "ShrineBlood(Clone)")
+                if (IsDamageBrokenWithoutInflictor(damageInfo))
                 {
                     orig(self, damageInfo);
                     return;
                 }
+#if DEBUG
+                Log.Warning("INFLICTORLESS DAMAGE DETECTED");
+#endif
                 // checking for no crit procs here might affect survivor abilities
                 if (!AllowProcCrits.Value)
                 {
@@ -365,10 +318,13 @@ namespace NoProcChainsArtifact
                 orig(self, damageInfo);
                 return;
             }
-            else if (IsInflictorFromItem(damageInfo.inflictor.name))
+            SetCoefficientIfFromItem(damageInfo);
+#if DEBUG
+            if (damageInfo.procCoefficient > 0.1)
             {
-                damageInfo.procCoefficient = 0;
+                Log.Warning("DAMAGE FROM SPECIFIC ITEM DETECTED");
             }
+#endif
 
             orig(self, damageInfo);
             return;
