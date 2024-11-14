@@ -23,7 +23,7 @@ namespace NoProcChainsArtifact
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "NoProcChainsArtifact";
-        public const string PluginVersion = "1.1.2";
+        public const string PluginVersion = "1.1.3";
         public List<ArtifactBase> Artifacts = [];
 
         public void Awake()
