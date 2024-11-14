@@ -20,6 +20,7 @@ Along with all that, if everyone in a multiplayer game changes a config option f
 Sadly I couldn't figure out how to do make *every* item unable to proc, though. These are the only ones that AFAIK I'm unable to prevent proccing on-hit items without modifying the items directly:
 - Headstompers
 - Cryptic Source from Starstorm 2
+- Beta Constructs from SivsContentPack
 
 I was also unable to let twisted elite effects proc items, as it's internally seen as razorwire which this artifact prevents from proccing items. That means this artifact indirectly nerfs twisted elites!
 
