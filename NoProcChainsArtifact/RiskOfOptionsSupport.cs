@@ -33,6 +33,21 @@ namespace NoProcChainsArtifact
             );
             ModSettingsManager.AddOption(
                 new CheckBoxOption(
+                    ArtifactOfTheUnchained.AllowSawmerangProcs
+                )
+            );
+            ModSettingsManager.AddOption(
+                new CheckBoxOption(
+                    ArtifactOfTheUnchained.AllowElectricBoomerangProcs
+                )
+            );
+            ModSettingsManager.AddOption(
+                new CheckBoxOption(
+                    ArtifactOfTheUnchained.AllowGloopProcs
+                )
+            );
+            ModSettingsManager.AddOption(
+                new CheckBoxOption(
                     ArtifactOfTheUnchained.AllowShurikenProcs
                 )
             );
@@ -44,11 +59,6 @@ namespace NoProcChainsArtifact
             ModSettingsManager.AddOption(
                 new CheckBoxOption(
                     ArtifactOfTheUnchained.AllowFireworkProcs
-                )
-            );
-            ModSettingsManager.AddOption(
-                new CheckBoxOption(
-                    ArtifactOfTheUnchained.AllowGloopProcs
                 )
             );
             ModSettingsManager.AddOption(

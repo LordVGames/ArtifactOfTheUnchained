@@ -23,7 +23,7 @@ namespace NoProcChainsArtifact
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "NoProcChainsArtifact";
-        public const string PluginVersion = "1.1.3";
+        public const string PluginVersion = "1.1.4";
         public List<ArtifactBase> Artifacts = [];
 
         public void Awake()
@@ -44,14 +44,14 @@ namespace NoProcChainsArtifact
     public class ArtifactOfTheUnchained : ArtifactBase
     {
         public static ConfigEntry<bool> AllowEquipmentProcs;
+        public static ConfigEntry<bool> AllowSawmerangProcs;
+        public static ConfigEntry<bool> AllowElectricBoomerangProcs;
         public static ConfigEntry<bool> AllowFireworkProcs;
         public static ConfigEntry<bool> AllowShurikenProcs;
         public static ConfigEntry<bool> AllowEgoProcs;
         public static ConfigEntry<bool> AllowGloopProcs;
         public static ConfigEntry<bool> AllowAspectPassiveProcs;
         public static ConfigEntry<bool> AllowProcCrits;
-        // this needs to be a float because the ingame number is one
-        public static float tinyProcCoefficient = 0.001f;
         public override string ArtifactLangTokenName => "NO_PROC_CHAINS";
         public override string ArtifactName => "Artifact of the Unchained";
         public override string ArtifactDescription => "Almost all item effects cannot proc your on-hit item effects for you.";
@@ -71,10 +71,12 @@ namespace NoProcChainsArtifact
         private void CreateConfig(ConfigFile config)
         {
             AllowEquipmentProcs = config.Bind<bool>(ArtifactName, "Allow equipments to proc items", false, "Should damage from equipments be allowed to proc your on-hit items?");
+            AllowSawmerangProcs = config.Bind<bool>(ArtifactName, "Allow Sawmerang to proc", true, "Should damage from Sawmerang be allowed to proc your on-hit items? WARNING: This will also disable the equipment's built-in bleed on hit!\nThis setting is completely separate from the general equipment procs setting, meaning you can let sawmerang proc while preventing all other equipments from proccing.");
+            AllowElectricBoomerangProcs = config.Bind<bool>(ArtifactName, "Allow Electric Boomerang to proc", true, "Should damage from Electric Boomerang be allowed to proc your on-hit items? WARNING: This will also disable the item's built-in stun on hit!");
+            AllowGloopProcs = config.Bind<bool>(ArtifactName, "Allow Genesis Loop to proc items", true, "Should damage from Genesis Loop be allowed to proc your on-hit items?");
             AllowShurikenProcs = config.Bind<bool>(ArtifactName, "Allow Shurikens to proc items", false, "Should damage from Shurikens be allowed to proc your on-hit items?");
             AllowEgoProcs = config.Bind<bool>(ArtifactName, "Allow Egocentrism to proc items", false, "Should damage from Egocentrism be allowed to proc your on-hit items?");
             AllowFireworkProcs = config.Bind<bool>(ArtifactName, "Allow Fireworks to proc items", false, "Should damage from Fireworks be allowed to proc your on-hit items?");
-            AllowGloopProcs = config.Bind<bool>(ArtifactName, "Allow Genesis Loop to proc items", true, "Should damage from Genesis Loop be allowed to proc your on-hit items?");
             AllowAspectPassiveProcs = config.Bind<bool>(ArtifactName, "Allow elite passives to proc items", true, "Should damage from perfected & malachite elites' passive attacks be allowed to proc your on-hit items? Twisted's passive can proc, but is internally seen as razorwire, so as far as I know I'm unable to let it proc with the artifact on.");
             AllowProcCrits = config.Bind<bool>(ArtifactName, "Allow item procs to crit", true, "Should damage from item procs be allowed to crit?");
         }
@@ -105,6 +107,7 @@ namespace NoProcChainsArtifact
             Log.Debug($"inflictor is {damageInfo.inflictor}");
             Log.Debug($"position is {damageInfo.position}");
             Log.Debug($"procChainMask is {damageInfo.procChainMask}");
+            Log.Debug($"procChainMask.mask is {damageInfo.procChainMask.mask}");
             Log.Debug($"procCoefficient is {damageInfo.procCoefficient}");
             Log.Debug($"rejected is {damageInfo.rejected}");
         }
@@ -114,9 +117,6 @@ namespace NoProcChainsArtifact
             switch (damageInfo.inflictor.name)
             {
                 #region items
-                case "StunAndPierceBoomerang(Clone)":
-                    damageInfo.procCoefficient = tinyProcCoefficient;
-                    break;
                 case "IcicleAura(Clone)":
                 case "DaggerProjectile(Clone)":
                 case "RunicMeteorStrikeImpact(Clone)":
@@ -165,14 +165,20 @@ namespace NoProcChainsArtifact
                 case "MeteorStorm(Clone)":
                 case "VendingMachineProjectile(Clone)":
                 case "FireballVehicle(Clone)":
+                    if (!AllowEquipmentProcs.Value)
+                    {
+                        damageInfo.procCoefficient = 0;
+                    }
+                    break;
                 /*
                  * i would give sawmerang a really low proc coeff but bleed duration scales off of that too
-                 * so even though it's guranteed to apply it does one tick then goes away
+                 * so even though it's guranteed to apply it does one tick of damage then all bleed stacks goes away
                  * its either all procs or no procs
-                 * thanks hopoo
+                 * this also applies to electric boomerang's stun
+                 * thanks hopoo (in general) /s
                  */
                 case "Sawmerang(Clone)":
-                    if (!AllowEquipmentProcs.Value)
+                    if (!AllowSawmerangProcs.Value)
                     {
                         damageInfo.procCoefficient = 0;
                     }
@@ -184,7 +190,7 @@ namespace NoProcChainsArtifact
                 case "PoisonStakeProjectile(Clone)":
                     if (!AllowAspectPassiveProcs.Value)
                     {
-                        // i think this also makes malachite debuff nonexistant too
+                        // this also makes malachite debuff & perfected cripple not apply
                         damageInfo.procCoefficient = 0;
                     }
                     break;
@@ -292,6 +298,12 @@ namespace NoProcChainsArtifact
                 if (!AllowProcCrits.Value)
                 {
                     damageInfo.crit = false;
+                }
+                // letting electric boomerang proc and thus do its stun
+                if (damageInfo.procChainMask.mask == 8388608 && AllowElectricBoomerangProcs.Value)
+                {
+                    orig(self, damageInfo);
+                    return;
                 }
 
                 damageInfo.procCoefficient = 0;
