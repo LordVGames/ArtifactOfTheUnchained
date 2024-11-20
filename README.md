@@ -6,6 +6,8 @@ This artifact prevents proc chains from happening with multiple on-hit items (AT
 ## Configuration
 There are also some items whose ability to proc your items I left configurable:
 - All damaging equipment items (off by default)
+- Sawmerang (on by default since it's built-in bleed needs a proc coefficient)
+- Electric Boomerang (same situation as sawmerang but for stun)
 - Shuriken (off by default)
 - Egocentrism (off by default)
 - Fireworks (off by default)
