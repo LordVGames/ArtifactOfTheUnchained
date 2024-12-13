@@ -5,26 +5,19 @@ This artifact prevents proc chains from happening with multiple on-hit items (AT
 
 ## Configuration
 There are also some items whose ability to proc your items I left configurable:
-- All damaging equipment items (off by default)
-- Sawmerang (on by default since it's built-in bleed needs a proc coefficient)
-- Electric Boomerang (same situation as sawmerang but for stun)
-- Shuriken (off by default)
-- Egocentrism (off by default)
-- Fireworks (off by default)
-- Genesis Loop (on by default)
-- Malachite & Perfected elite passive attacks (on by default)
+- All damaging equipment items (that aren't covered by their own config option) - off by default
+- Sawmerang - on by default (it needs a proc coefficient to apply it's guranteed bleed)
+- Electric Boomerang (same situation as sawmerang but for stun) - on by default
+- Disposable Missile Launcher (and Starstorm 2 Armed Backpack) missiles  - off by default
+- Shuriken - off by default
+- Egocentrism - off by default
+- Fireworks - off by default
+- Genesis Loop - on by default
+- Malachite, Perfected, and Twisted elite passive attacks - on by default
 
-I also made it configurable whether or not procs are able to crit or not, allowed by default. IIRC procs couldn't crit in ror1 & rorr, so it's an option for those who want it.
+I also made it configurable whether or not procs are able to crit or not, allowed by default. I don't remember if procs could crit or not in ror1 & rorr, so it's an option for those who want it.
 
 Along with all that, if everyone in a multiplayer game changes a config option for the artifact using Risk of Options, config options can be changed mid-run! Best to do it in the bazaar or just somewhere where there's no combat going on to prevent any errors.
-
-## Items unaffected
-Sadly I couldn't figure out how to do make *every* item unable to proc, though. These are the only ones that AFAIK I'm unable to prevent proccing on-hit items without modifying the items directly:
-- Headstompers
-- Cryptic Source from Starstorm 2
-- Beta Constructs from SivsContentPack
-
-I was also unable to let twisted elite effects proc items, as it's internally seen as razorwire which this artifact prevents from proccing items. That means this artifact indirectly nerfs twisted elites!
 
 ## Bugs/Suggestions
 Due to the way this artifact works I have a feeling that either the procs from some mod somewhere gets turned off when it shouldn't, or I missed an item that needs to be explicitly checked for to prevent item proccing.
