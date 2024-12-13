@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using System.Linq;
-using UnityEngine.AddressableAssets;
 
 namespace NoProcChainsArtifact
 {
@@ -23,14 +22,14 @@ namespace NoProcChainsArtifact
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "NoProcChainsArtifact";
-        public const string PluginVersion = "1.1.4";
+        public const string PluginVersion = "1.2.0";
         public List<ArtifactBase> Artifacts = [];
 
         public void Awake()
         {
             PluginInfo = Info;
             Log.Init(Logger);
-            ModAssets.Init();
+            Assets.Init();
 
             var ArtifactTypes = Assembly.GetExecutingAssembly().GetTypes().Where(type => !type.IsAbstract && type.IsSubclassOf(typeof(ArtifactBase)));
             foreach (var artifactType in ArtifactTypes)
@@ -46,6 +45,7 @@ namespace NoProcChainsArtifact
         public static ConfigEntry<bool> AllowEquipmentProcs;
         public static ConfigEntry<bool> AllowSawmerangProcs;
         public static ConfigEntry<bool> AllowElectricBoomerangProcs;
+        public static ConfigEntry<bool> AllowGenericMissileProcs;
         public static ConfigEntry<bool> AllowFireworkProcs;
         public static ConfigEntry<bool> AllowShurikenProcs;
         public static ConfigEntry<bool> AllowEgoProcs;
@@ -54,25 +54,26 @@ namespace NoProcChainsArtifact
         public static ConfigEntry<bool> AllowProcCrits;
         public override string ArtifactLangTokenName => "NO_PROC_CHAINS";
         public override string ArtifactName => "Artifact of the Unchained";
-        public override string ArtifactDescription => "Almost all item effects cannot proc your on-hit item effects for you.";
-        public override Sprite ArtifactEnabledIcon => ModAssets.AssetBundle.LoadAsset<Sprite>("NoProcChainsArtifactIcon_Enabled.png");
-        public override Sprite ArtifactDisabledIcon => ModAssets.AssetBundle.LoadAsset<Sprite>("NoProcChainsArtifactIcon_Disabled.png");
+        public override string ArtifactDescription => "All item effects cannot proc your on-hit item effects for you.";
+        public override Sprite ArtifactEnabledIcon => Assets.AssetBundle.LoadAsset<Sprite>("NoProcChainsArtifactIcon_Enabled.png");
+        public override Sprite ArtifactDisabledIcon => Assets.AssetBundle.LoadAsset<Sprite>("NoProcChainsArtifactIcon_Disabled.png");
         public override void Init(ConfigFile config)
         {
             CreateLang();
             CreateConfig(config);
             CreateArtifact();
             Hooks();
-            if (RiskOfOptionsSupport.ModIsRunning)
+            if (ModSupport.RiskOfOptions.ModIsRunning)
             {
-                RiskOfOptionsSupport.AddOptions();
+                ModSupport.RiskOfOptions.AddOptions();
             }
         }
         private void CreateConfig(ConfigFile config)
         {
-            AllowEquipmentProcs = config.Bind<bool>(ArtifactName, "Allow equipments to proc items", false, "Should damage from equipments be allowed to proc your on-hit items?");
+            AllowEquipmentProcs = config.Bind<bool>(ArtifactName, "Allow equipments to proc items", true, "Should damage from equipments be allowed to proc your on-hit items?");
             AllowSawmerangProcs = config.Bind<bool>(ArtifactName, "Allow Sawmerang to proc", true, "Should damage from Sawmerang be allowed to proc your on-hit items? WARNING: This will also disable the equipment's built-in bleed on hit!\nThis setting is completely separate from the general equipment procs setting, meaning you can let sawmerang proc while preventing all other equipments from proccing.");
             AllowElectricBoomerangProcs = config.Bind<bool>(ArtifactName, "Allow Electric Boomerang to proc", true, "Should damage from Electric Boomerang be allowed to proc your on-hit items? WARNING: This will also disable the item's built-in stun on hit!");
+            AllowGenericMissileProcs = config.Bind<bool>(ArtifactName, "Allow Missiles to proc", false, "Should damage from any item that isn't ATG that fires missiles be allowed to proc your on-hit items? WARNING: This counts for Starstorm 2's Armed Backpack alongside Disposable Missile Launcher!");
             AllowGloopProcs = config.Bind<bool>(ArtifactName, "Allow Genesis Loop to proc items", true, "Should damage from Genesis Loop be allowed to proc your on-hit items?");
             AllowShurikenProcs = config.Bind<bool>(ArtifactName, "Allow Shurikens to proc items", false, "Should damage from Shurikens be allowed to proc your on-hit items?");
             AllowEgoProcs = config.Bind<bool>(ArtifactName, "Allow Egocentrism to proc items", false, "Should damage from Egocentrism be allowed to proc your on-hit items?");
@@ -82,9 +83,7 @@ namespace NoProcChainsArtifact
         }
         public override void Hooks()
         {
-            On.RoR2.HealthComponent.TakeDamage += HealthComponent_OnTakeDamage;
-            // need to IL patch some vanilla survivor skills so they actually have an inflictor and can proc items
-            ILHooks.SetupILHooks();
+            On.RoR2.CharacterMaster.OnBodyDamaged += CharacterMaster_OnBodyDamaged;
         }
 
         private void LogDamageInfo(DamageInfo damageInfo)
@@ -92,6 +91,8 @@ namespace NoProcChainsArtifact
             Log.Debug("");
             Log.Debug("");
             Log.Debug("");
+            Log.Debug($"damageInfo.damageType.damageSource is {damageInfo.damageType.damageSource}");
+            Log.Debug($"damageInfo.damageType.IsDamageSourceSkillBased is {damageInfo.damageType.IsDamageSourceSkillBased}");
             Log.Debug($"attacker is {damageInfo.attacker}");
             Log.Debug($"canRejectForce is {damageInfo.canRejectForce}");
             Log.Debug($"crit is {damageInfo.crit}");
@@ -101,7 +102,7 @@ namespace NoProcChainsArtifact
             Log.Debug($"damageType.damageType is {damageInfo.damageType.damageType}");
             Log.Debug($"damageType.damageTypeCombined is {damageInfo.damageType.damageTypeCombined}");
             Log.Debug($"damageType.damageTypeExtended is {damageInfo.damageType.damageTypeExtended}");
-            Log.Debug($"delayedDamageSecondHalf is {damageInfo.delayedDamageSecondHalf}");
+
             Log.Debug($"dotIndex is {damageInfo.dotIndex}");
             Log.Debug($"force is {damageInfo.force}");
             Log.Debug($"inflictor is {damageInfo.inflictor}");
@@ -112,45 +113,43 @@ namespace NoProcChainsArtifact
             Log.Debug($"rejected is {damageInfo.rejected}");
         }
 
-        private void SetCoefficientIfFromItem(DamageInfo damageInfo)
+        private bool SetConfiguredItemProcCoefficient(DamageInfo damageInfo)
         {
+            bool isDamageFromConfiguredItem = false;
             switch (damageInfo.inflictor.name)
             {
                 #region items
-                case "IcicleAura(Clone)":
-                case "DaggerProjectile(Clone)":
-                case "RunicMeteorStrikeImpact(Clone)":
-                // ss2
-                case "LampBulletPlayer(Clone)":
-                // enemiesreturns
-                case "IfritPylonPlayerBody(Clone)":
-                // sivscontent
-                case "MushroomWard(Clone)":
-                case "ThunderAuraStrike(Clone)":
-                case "LunarShockwave(Clone)":
-                    damageInfo.procCoefficient = 0;
+                case "StunAndPierceBoomerang(Clone)":
+                    isDamageFromConfiguredItem = true;
+                    if (!AllowFireworkProcs.Value)
+                    {
+                        damageInfo.procCoefficient = 0;
+                        isDamageFromConfiguredItem = false;
+                    }
                     break;
-
                 case "FireworkProjectile(Clone)":
+                    isDamageFromConfiguredItem = true;
                     if (!AllowFireworkProcs.Value)
                     {
                         damageInfo.procCoefficient = 0;
                     }
                     break;
                 case "ShurikenProjectile(Clone)":
+                    isDamageFromConfiguredItem = true;
                     if (!AllowShurikenProcs.Value)
                     {
                         damageInfo.procCoefficient = 0;
                     }
                     break;
-                // ego and gloop get separate configs because gloop proccing gives it a cool niche and ego prolly too busted with proc chains
                 case "LunarSunProjectile(Clone)":
+                    isDamageFromConfiguredItem = true;
                     if (!AllowEgoProcs.Value)
                     {
                         damageInfo.procCoefficient = 0;
                     }
                     break;
                 case "VagrantNovaItemBodyAttachment(Clone)":
+                    isDamageFromConfiguredItem = true;
                     if (!AllowGloopProcs.Value)
                     {
                         damageInfo.procCoefficient = 0;
@@ -160,11 +159,11 @@ namespace NoProcChainsArtifact
 
                 #region equipments
                 case "GoldGatController(Clone)":
-                case "MissileProjectile(Clone)":
                 case "BeamSphere(Clone)":
                 case "MeteorStorm(Clone)":
                 case "VendingMachineProjectile(Clone)":
                 case "FireballVehicle(Clone)":
+                    isDamageFromConfiguredItem = true;
                     if (!AllowEquipmentProcs.Value)
                     {
                         damageInfo.procCoefficient = 0;
@@ -175,19 +174,35 @@ namespace NoProcChainsArtifact
                  * so even though it's guranteed to apply it does one tick of damage then all bleed stacks goes away
                  * its either all procs or no procs
                  * this also applies to electric boomerang's stun
-                 * thanks hopoo (in general) /s
+                 * thanks hopoo /s
                  */
                 case "Sawmerang(Clone)":
+                    isDamageFromConfiguredItem = true;
                     if (!AllowSawmerangProcs.Value)
                     {
                         damageInfo.procCoefficient = 0;
                     }
                     break;
-                    
+                // atg triggers this but it can be checked for with the procchainmask
+                // starstorm 2's armed backpack also triggers this but i can't check for it specifically
+                case "MissileProjectile(Clone)":
+                    isDamageFromConfiguredItem = true;
+                    if (damageInfo.procChainMask.mask > 0)
+                    {
+                        damageInfo.procCoefficient = 0;
+                    }
+                    else if (!AllowGenericMissileProcs.Value)
+                    {
+                        damageInfo.procCoefficient = 0;
+                    }
+                    break;
+
                 #region aspects
                 case "LunarMissileProjectile(Clone)":
                 case "PoisonOrbProjectile(Clone)":
                 case "PoisonStakeProjectile(Clone)":
+                case "BeadProjectileTrackingBomb(Clone)":
+                    isDamageFromConfiguredItem = true;
                     if (!AllowAspectPassiveProcs.Value)
                     {
                         // this also makes malachite debuff & perfected cripple not apply
@@ -197,148 +212,122 @@ namespace NoProcChainsArtifact
                 #endregion
                 #endregion
             }
+            return isDamageFromConfiguredItem;
         }
 
         private bool IsDamageBrokenWithoutInflictor(DamageInfo damageInfo)
         {
+            // glacial death bubble won't freeze with with 0 coefficient
+            if (damageInfo.damageType.damageTypeCombined == 131328)
+            {
+                return true;
+            }
             /*
-             * these survivor attacks don't have an inflictor and break because of the artifact:
-             * acrid epidemic's spreading hits (it's here since i couldn't find a good way to il hook and set inflictor)
-             * ss2 executioner's special
-             * nemesis enforcer's minigun-stance secondary
-             * miner's secondary & third abilities
-             * 
-             * also checking for sulfur pods here since they don't debuff you with no proc coefficient
-             * yet aqueducts tar pots still work
-             * and also blood shrines because they deal no damage with 0 coefficient (????)
+             * blood shrines deal no damaage when set with 0 proc coefficient for some reason
+             * sulfur pods also break since they don't debuff you with no proc coefficient
+             * (yet aqueducts tar pots still tar you without coefficient)
             */
             switch (damageInfo.attacker.name)
             {
-                case "CrocoBody(Clone)":
-                    if (damageInfo.damageType.damageTypeCombined == 4096)
-                    {
-                        return true;
-                    }
-                    break;
-                case "Executioner2Body(Clone)":
-                    if (damageInfo.damageType.damageTypeCombined == 393216)
-                    {
-                        return true;
-                    }
-                    break;
-                case "NemesisEnforcerBody(Clone)":
-                    if (damageInfo.damageType.damageTypeCombined == 131104)
-                    {
-                        return true;
-                    }
-                    break;
-                case "MinerBody(Clone)":
-                    switch (damageInfo.damageType.damageTypeCombined)
-                    {
-                        case 131104:
-                        case 131072:
-                            return true;
-                    }
-                    break;
                 case "SulfurPodBody(Clone)":
                 case "ShrineBlood(Clone)":
                     return true;
             }
-            switch (damageInfo.damageType.damageTypeCombined)
-            {
-                // capacitor has no inflictor so even when config allows it it still won't proc
-                case 131104:
-                    if (AllowEquipmentProcs.Value)
-                    {
-                        return true;
-                    }
-                    break;
-                // glacial death bubble won't with with 0 coefficient
-                case 131328:
-                    if (damageInfo.procCoefficient == 0.75)
-                    {
-                        return true;
-                    }
-                    break;
-            }
             return false;
+        
         }
 
-        private void HealthComponent_OnTakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)
+        private void CharacterMaster_OnBodyDamaged(On.RoR2.CharacterMaster.orig_OnBodyDamaged orig, CharacterMaster self, DamageReport damageReport)
         {
+            orig(self, damageReport);
             // ty old InfiniteProcChains mod for a reference on how to do this stuff
-
             if (!ArtifactEnabled)
             {
-                orig(self, damageInfo);
+                orig(self, damageReport);
                 return;
             }
-            // void fog and probably other things have no inflictor nor attacker and can cause errors if not checked for
-            if (damageInfo.inflictor == null && damageInfo.attacker == null)
+#if DEBUG
+            LogDamageInfo(damageReport.damageInfo);
+#endif
+            // void fog and probably other things have no inflictor nor attacker and that can cause errors if not checked for
+            //if (damageInfo.inflictor == null && damageInfo.attacker == null)
+            if (!damageReport.attacker)
             {
-                orig(self, damageInfo);
+                orig(self, damageReport);
                 return;
             }
-
-            /*
-             *  if a survivor shoots with hitscan, the inflictor and the attacker are both the survivor and the proc chain mask is 0
-             *  if a survivor fires a unique projectile from a skill, the inflictor isn't the survivor but the attacker is and the proc chain mask is still 0
-             *  any item procs add to the proc chain mask when they hit, so when the procchainmask is not 0 it's guranteed to be from an item hit
-             *  some item procs (polylute) and some equips (capacitor) can have no inflictor, but some still do (atg, missle launcher)
-             *  missile launcher has a missle inflictor like atg, but has no procchainmask since it doesn't add itself to the mask
-             */
-#if DEBUG
-            LogDamageInfo(damageInfo);
-#endif
-            if (damageInfo.procChainMask.mask > 0)
+            // need to let nemesis commando gouge still proc, player or not
+            if (damageReport.damageInfo.damageType.damageType.HasFlag(DamageType.DoT))
             {
-#if DEBUG
-                Log.Warning($"ITEM TRYING TO PROC CHAIN DETECTED");
-#endif
+                orig(self, damageReport);
+                return;
+            }
+            // need to let electric boomerang proc and thus do its stun, even if it'll proc other items
+            if (damageReport.damageInfo.procChainMask.mask == 8388608 && AllowElectricBoomerangProcs.Value)
+            {
                 if (!AllowProcCrits.Value)
                 {
-                    damageInfo.crit = false;
+                    damageReport.damageInfo.crit = false;
                 }
-                // letting electric boomerang proc and thus do its stun
-                if (damageInfo.procChainMask.mask == 8388608 && AllowElectricBoomerangProcs.Value)
-                {
-                    orig(self, damageInfo);
-                    return;
-                }
-
-                damageInfo.procCoefficient = 0;
-                orig(self, damageInfo);
+                orig(self, damageReport);
                 return;
             }
-            else if (damageInfo.inflictor == null)
+            if (IsDamageBrokenWithoutInflictor(damageReport.damageInfo))
             {
-                if (IsDamageBrokenWithoutInflictor(damageInfo))
-                {
-                    orig(self, damageInfo);
-                    return;
-                }
-#if DEBUG
-                Log.Warning("INFLICTORLESS DAMAGE DETECTED");
-#endif
-                // checking for no crit procs here might affect survivor abilities
-                if (!AllowProcCrits.Value)
-                {
-                    damageInfo.crit = false;
-                }
-
-                damageInfo.procCoefficient = 0;
-                orig(self, damageInfo);
+                orig(self, damageReport);
                 return;
             }
-            SetCoefficientIfFromItem(damageInfo);
-#if DEBUG
-            if (damageInfo.procCoefficient > 0.1)
+            if (damageReport.damageInfo.inflictor)
             {
-                Log.Warning("DAMAGE FROM SPECIFIC ITEM DETECTED");
+                bool isDamageFromConfiguredItem = SetConfiguredItemProcCoefficient(damageReport.damageInfo);
+                if (isDamageFromConfiguredItem)
+                {
+                    if (!AllowProcCrits.Value)
+                    {
+                        damageReport.damageInfo.crit = false;
+                    }
+                    // proc coefficient has or has not been dealt with based on the config, so don't bother continuing
+                    orig(self, damageReport);
+                    return;
+                }
             }
-#endif
 
-            orig(self, damageInfo);
+
+
+            // players can only proc items from their skills
+            if (damageReport.attackerMaster.playerCharacterMasterController)
+            {
+                if (!damageReport.damageInfo.damageType.IsDamageSourceSkillBased)
+                {
+                    damageReport.damageInfo.procCoefficient = 0;
+                }
+            }
+            // you'd think the damagesource stuff would apply to monsters too, but all monster skills are considered "NoneSpecified"
+            // i would sarcastically say "thanks gearbox" but i don't blame them for not going through every enemy attack and correctly setting each one
+            // although the ss2 devs did it with their enemies so it's not like it's impossible
+            else if (damageReport.damageInfo.procChainMask.mask > 0)
+            {
+                damageReport.damageInfo.procCoefficient = 0;
+                orig(self, damageReport);
+                return;
+            }
+            // chirr flower turret counts for this check but it should always be allowed to proc items to let tamed ground enemies do something against flying ones
+            // but the flower turret's attack is really generic so it's kinda hard to distinguish it from other item procs
+            else if (!damageReport.damageInfo.inflictor && ModSupport.Starstorm2.ChirrFlowerItemDef)
+            {
+                if (damageReport.attackerBody.inventory.GetItemCount(ModSupport.Starstorm2.ChirrFlowerItemDef) > 0)
+                {
+                    DamageTypeCombo genericDamageType = DamageType.Generic;
+                    genericDamageType.damageTypeExtended = DamageTypeExtended.Generic;
+                    genericDamageType.damageSource = DamageSource.NoneSpecified;
+                    if (damageReport.damageInfo.damageType != genericDamageType)
+                    {
+                        damageReport.damageInfo.procCoefficient = 0;
+                    }
+                }
+            }
+
+            orig(self, damageReport);
             return;
         }
     }

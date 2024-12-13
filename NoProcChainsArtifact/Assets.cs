@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace NoProcChainsArtifact
 {
-    public static class ModAssets
+    public static class Assets
     {
         public static AssetBundle AssetBundle;
         public const string BundleName = "unchainedartifacticons";
