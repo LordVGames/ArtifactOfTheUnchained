@@ -31,7 +31,7 @@ namespace NoProcChainsArtifact
             public static void AddOptions()
             {
                 ModSettingsManager.SetModIcon(Assets.AssetBundle.LoadAsset<Sprite>("RoOIcon.png"));
-                ModSettingsManager.SetModDescription("Adds an artifact that disables proc chains and prevents most items from starting a proc chain.");
+                ModSettingsManager.SetModDescription("Adds an artifact that prevents your items from proccing your on-hit items for you.");
 
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
@@ -55,7 +55,7 @@ namespace NoProcChainsArtifact
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowGloopProcs
+                        ArtifactOfTheUnchained.AllowFireworkProcs
                     )
                 );
                 ModSettingsManager.AddOption(
@@ -70,12 +70,12 @@ namespace NoProcChainsArtifact
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowFireworkProcs
+                        ArtifactOfTheUnchained.AllowGloopProcs
                     )
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowAspectPassiveProcs
+                        ArtifactOfTheUnchained.AllowAspectProcs
                     )
                 );
                 ModSettingsManager.AddOption(
