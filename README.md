@@ -5,15 +5,15 @@ This artifact prevents proc chains from happening with multiple on-hit items (AT
 
 ## Configuration
 There are also some items whose ability to proc your items I left configurable:
-- All damaging equipment items (that aren't covered by their own config option) - off by default
+- All damaging equipment items except Forgive Me Please (that aren't covered by their own config option) - on by default
 - Sawmerang - on by default (it needs a proc coefficient to apply it's guranteed bleed)
 - Electric Boomerang (same situation as sawmerang but for stun) - on by default
 - Disposable Missile Launcher (and Starstorm 2 Armed Backpack) missiles  - off by default
+- Fireworks - off by default
 - Shuriken - off by default
 - Egocentrism - off by default
-- Fireworks - off by default
 - Genesis Loop - on by default
-- Malachite, Perfected, and Twisted elite passive attacks - on by default
+- Malachite, Perfected, Gilded and Twisted elite passive attacks - on by default
 
 I also made it configurable whether or not procs are able to crit or not, allowed by default. I don't remember if procs could crit or not in ror1 & rorr, so it's an option for those who want it.
 
