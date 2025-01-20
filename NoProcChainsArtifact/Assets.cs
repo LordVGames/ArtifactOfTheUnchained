@@ -12,7 +12,7 @@ namespace NoProcChainsArtifact
         {
             get
             {
-                return Path.Combine(Path.GetDirectoryName(NoProcChainsArtifact.PluginInfo.Location), BundleName);
+                return Path.Combine(Path.GetDirectoryName(Main.PluginInfo.Location), BundleName);
             }
         }
 

@@ -1,10 +1,10 @@
 {
   "strings": {
     "ARTIFACT_NO_PROC_CHAINS_NAME": "Artifact of the Unchained",
-    "ARTIFACT_NO_PROC_CHAINS_DESCRIPTION": "All item effects cannot proc your on-hit item effects for you."
+    "ARTIFACT_NO_PROC_CHAINS_DESC": "Nerfs proc chains and procs caused by items such as fireworks, all depending on how you've configured the mod.",
   },
   "en": {
     "ARTIFACT_NO_PROC_CHAINS_NAME": "Artifact of the Unchained",
-    "ARTIFACT_NO_PROC_CHAINS_DESCRIPTION": "All item effects cannot proc your on-hit item effects for you."
+    "ARTIFACT_NO_PROC_CHAINS_DESC": "Nerfs proc chains and procs caused by items such as fireworks, all depending on how you've configured the mod.",
   }
 }

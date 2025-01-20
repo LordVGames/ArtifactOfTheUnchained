@@ -11,6 +11,7 @@ namespace NoProcChainsArtifact
             _logSource = logSource;
         }
 
+        // TODO Figure out making debug log only working when #if DEBUG is on
         internal static void Debug(object data) => _logSource.LogDebug(data);
         internal static void Error(object data) => _logSource.LogError(data);
         internal static void Fatal(object data) => _logSource.LogFatal(data);

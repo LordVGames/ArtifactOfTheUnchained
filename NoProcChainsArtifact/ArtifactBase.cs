@@ -3,7 +3,7 @@ using BepInEx.Configuration;
 using RoR2;
 using R2API;
 
-namespace ExamplePlugin
+namespace NoProcChainsArtifact
 {
     public abstract class ArtifactBase
     {

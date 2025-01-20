@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Runtime.CompilerServices;
 using RiskOfOptions.Options;
 using RiskOfOptions;
 using RoR2;
@@ -34,53 +31,68 @@ namespace NoProcChainsArtifact
                 ModSettingsManager.SetModDescription("Adds an artifact that prevents your items from proccing your on-hit items for you.");
 
                 ModSettingsManager.AddOption(
-                    new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowEquipmentProcs
+                    new IntFieldOption(
+                        ConfigOptions.ProcChainAmountLimit
+                    )
+                );
+                ModSettingsManager.AddOption(
+                    new FloatFieldOption(
+                        ConfigOptions.ProcChainDamageNerfToPercent
+                    )
+                );
+                ModSettingsManager.AddOption(
+                    new FloatFieldOption(
+                        ConfigOptions.ProcChainCoefficientNerfToPercent
                     )
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowSawmerangProcs
+                        ConfigOptions.AllowEquipmentProcs
                     )
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowElectricBoomerangProcs
+                        ConfigOptions.AllowSawmerangProcs
                     )
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowGenericMissileProcs
+                        ConfigOptions.AllowElectricBoomerangProcs
                     )
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowFireworkProcs
+                        ConfigOptions.AllowGenericMissileProcs
                     )
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowShurikenProcs
+                        ConfigOptions.AllowFireworkProcs
                     )
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowEgoProcs
+                        ConfigOptions.AllowShurikenProcs
                     )
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowGloopProcs
+                        ConfigOptions.AllowEgoProcs
                     )
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowAspectProcs
+                        ConfigOptions.AllowGloopProcs
                     )
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ArtifactOfTheUnchained.AllowProcCrits
+                        ConfigOptions.AllowAspectProcs
+                    )
+                );
+                ModSettingsManager.AddOption(
+                    new CheckBoxOption(
+                        ConfigOptions.AllowProcCrits
                     )
                 );
             }
