@@ -1,6 +1,6 @@
 ﻿using BepInEx.Configuration;
 
-namespace NoProcChainsArtifact
+namespace ArtifactOfTheUnchained
 {
     public static class ConfigOptions
     {

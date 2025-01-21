@@ -1,7 +1,7 @@
 ﻿using RoR2;
 using R2API;
 
-namespace NoProcChainsArtifact
+namespace ArtifactOfTheUnchained
 {
     internal static class DamageRelated
     {

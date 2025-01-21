@@ -1,0 +1,13 @@
+﻿{
+	"name": "ArtifactOfTheUnchained",
+	"version_number": "2.0.0",
+	"website_url": "https://github.com/LordVGames/ArtifactOfTheUnchained",
+	"description": "Adds a highly configurable artifact that lets you customize how proc chains and items that start proc chains work.",
+	"dependencies": [
+		"bbepis-BepInExPack-5.4.2108",
+		"RiskofThunder-HookGenPatcher-1.2.3",
+		"RiskofThunder-R2API_Language-1.0.1",
+		"RiskofThunder-R2API_ContentManagement-1.0.6",
+		"RiskofThunder-R2API_ProcType-1.0.1"
+	]
+}

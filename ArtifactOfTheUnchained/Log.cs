@@ -1,6 +1,6 @@
 ﻿using BepInEx.Logging;
 
-namespace NoProcChainsArtifact
+namespace ArtifactOfTheUnchained
 {
     internal static class Log
     {

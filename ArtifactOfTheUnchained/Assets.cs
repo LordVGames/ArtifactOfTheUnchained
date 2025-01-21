@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using UnityEngine;
 
-namespace NoProcChainsArtifact
+namespace ArtifactOfTheUnchained
 {
     public static class Assets
     {

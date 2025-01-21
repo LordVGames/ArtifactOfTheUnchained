@@ -5,7 +5,7 @@ using RoR2;
 using SS2;
 using UnityEngine;
 
-namespace NoProcChainsArtifact
+namespace ArtifactOfTheUnchained
 {
     internal static class ModSupport
     {

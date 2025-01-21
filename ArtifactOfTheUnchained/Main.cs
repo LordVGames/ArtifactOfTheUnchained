@@ -10,7 +10,7 @@ using R2API;
 using R2API.Utils;
 using R2API.ContentManagement;
 
-namespace NoProcChainsArtifact
+namespace ArtifactOfTheUnchained
 {
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency(LanguageAPI.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
@@ -24,7 +24,7 @@ namespace NoProcChainsArtifact
         public static PluginInfo PluginInfo { get; private set; }
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
-        public const string PluginName = "NoProcChainsArtifact";
+        public const string PluginName = "ArtifactOfTheUnchained";
         public const string PluginVersion = "2.0.0";
 
         public List<ArtifactBase> Artifacts = [];
