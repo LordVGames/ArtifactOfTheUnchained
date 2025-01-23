@@ -5,7 +5,7 @@ using RoR2;
 using SS2;
 using UnityEngine;
 
-namespace ArtifactOfTheUnchained
+namespace ArtifactOfTheUnchainedMod
 {
     internal static class ModSupport
     {

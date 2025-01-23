@@ -1,6 +1,6 @@
 ﻿using BepInEx.Configuration;
 
-namespace ArtifactOfTheUnchained
+namespace ArtifactOfTheUnchainedMod
 {
     public static class ConfigOptions
     {

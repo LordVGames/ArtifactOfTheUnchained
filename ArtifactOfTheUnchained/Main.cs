@@ -10,7 +10,7 @@ using R2API;
 using R2API.Utils;
 using R2API.ContentManagement;
 
-namespace ArtifactOfTheUnchained
+namespace ArtifactOfTheUnchainedMod
 {
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency(LanguageAPI.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
@@ -25,7 +25,7 @@ namespace ArtifactOfTheUnchained
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "ArtifactOfTheUnchained";
-        public const string PluginVersion = "2.0.1";
+        public const string PluginVersion = "2.0.2";
 
         public List<ArtifactBase> Artifacts = [];
         public static string ArtifactDescription;
@@ -64,7 +64,7 @@ namespace ArtifactOfTheUnchained
 
     public class ArtifactOfTheUnchained : ArtifactBase
     {
-        public override string ArtifactLangTokenName => "NO_PROC_CHAINS";
+        public override string ArtifactLangTokenName => "UNCHAINED";
         public override string ArtifactName => "Artifact of the Unchained";
         public override string ArtifactDescription => "Nerfs proc chains and procs caused by items such as fireworks, all depending on how you've configured the mod.";
         public override Sprite ArtifactEnabledIcon => Assets.AssetBundle.LoadAsset<Sprite>("NoProcChainsArtifactIcon_Enabled.png");

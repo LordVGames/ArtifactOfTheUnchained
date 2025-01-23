@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using UnityEngine;
 
-namespace ArtifactOfTheUnchained
+namespace ArtifactOfTheUnchainedMod
 {
     public static class Assets
     {

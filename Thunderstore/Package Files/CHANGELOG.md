@@ -1,3 +1,6 @@
+## 2.0.2
+Forgot to change the internal name of the artifact to the proper name
+
 ## 2.0.1
 Try not to leave in large amount of debug logging challenge impossible
 

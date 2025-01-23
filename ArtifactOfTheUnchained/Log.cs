@@ -1,6 +1,6 @@
 ﻿using BepInEx.Logging;
 
-namespace ArtifactOfTheUnchained
+namespace ArtifactOfTheUnchainedMod
 {
     internal static class Log
     {

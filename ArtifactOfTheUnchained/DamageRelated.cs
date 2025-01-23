@@ -1,7 +1,7 @@
 ﻿using RoR2;
 using R2API;
 
-namespace ArtifactOfTheUnchained
+namespace ArtifactOfTheUnchainedMod
 {
     internal static class DamageRelated
     {
