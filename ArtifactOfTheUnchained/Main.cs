@@ -9,10 +9,10 @@ using RoR2;
 using R2API;
 using R2API.Utils;
 using R2API.ContentManagement;
+[assembly: HG.Reflection.SearchableAttribute.OptIn]
 
 namespace ArtifactOfTheUnchainedMod
 {
-    [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency(LanguageAPI.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(ProcTypeAPI.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(R2APIContentManager.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
@@ -25,16 +25,17 @@ namespace ArtifactOfTheUnchainedMod
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "ArtifactOfTheUnchained";
-        public const string PluginVersion = "2.0.2";
+        public const string PluginVersion = "2.1.0";
 
         public List<ArtifactBase> Artifacts = [];
-        public static string ArtifactDescription;
+        internal static bool AllowLoggingNerfs = false;
 
         public void Awake()
         {
             PluginInfo = Info;
             Log.Init(Logger);
             Assets.Init();
+            
 
             DamageRelated.ProccedByItem = ProcTypeAPI.ReserveProcType();
             var ArtifactTypes = Assembly.GetExecutingAssembly().GetTypes().Where(type => !type.IsAbstract && type.IsSubclassOf(typeof(ArtifactBase)));
@@ -59,6 +60,22 @@ namespace ArtifactOfTheUnchainedMod
             DamageRelated.CharacterMaster_OnBodyDamaged(damageReport);
             orig(self, damageReport);
             return;
+        }
+
+        [ConCommand(commandName = "unchained_toggle_logging_nerfs", flags = ConVarFlags.None)]
+        internal static void CCToggleLoggingNerfs(ConCommandArgs args)
+        {
+            AllowLoggingNerfs = !AllowLoggingNerfs;
+            string chatMessage;
+            if (AllowLoggingNerfs)
+            {
+                chatMessage = Language.GetString("ARTIFACT_UNCHAINED_SANITY_CHECK_ENABLED");
+            }
+            else
+            {
+                chatMessage = Language.GetString("ARTIFACT_UNCHAINED_SANITY_CHECK_DISABLED");
+            }
+            Chat.AddMessage(chatMessage);
         }
     }
 

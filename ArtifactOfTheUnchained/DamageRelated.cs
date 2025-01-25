@@ -250,10 +250,20 @@ namespace ArtifactOfTheUnchainedMod
             {
                 damageReport.damageInfo.crit = false;
             }
-            //Log.Error($"damageReport.damageDealt was {damageReport.damageDealt}");
+
+            float damageBeforeNerf = damageReport.damageDealt;
             damageReport.damageDealt *= ConfigOptions.ProcChainDamageNerfToPercent.Value;
-            //Log.Error($"damageReport.damageDealt is now {damageReport.damageDealt}");
+            if (Main.AllowLoggingNerfs && ConfigOptions.ProcChainDamageNerfToPercent.Value != 1)
+            {
+                Log.Info(Language.GetStringFormatted("ARTIFACT_UNCHAINED_PROC_DAMAGE_NERF", [damageBeforeNerf, damageReport.damageDealt]));
+            }
+
+            float procCoefficientBeforeNerf = damageReport.damageInfo.procCoefficient;
             damageReport.damageInfo.procCoefficient *= ConfigOptions.ProcChainCoefficientNerfToPercent.Value;
+            if (Main.AllowLoggingNerfs && ConfigOptions.ProcChainCoefficientNerfToPercent.Value != 1)
+            {
+                Log.Info(Language.GetStringFormatted("ARTIFACT_UNCHAINED_PROC_COEFFICIENT_NERF", [procCoefficientBeforeNerf, damageReport.damageInfo.procCoefficient]));
+            }
         }
 
         internal static int GetVanillaProcCountInChain(ProcChainMask procChainMask)
@@ -284,6 +294,10 @@ namespace ArtifactOfTheUnchainedMod
                 if (IsProcChainPastLimit(damageReport.damageInfo.procChainMask))
                 {
                     damageReport.damageInfo.procCoefficient = 0;
+                    if (Main.AllowLoggingNerfs)
+                    {
+                        Log.Info(Language.GetString("ARTIFACT_UNCHAINED_PROC_CHAIN_BLOCKED"));
+                    }
                 }
             }
         }

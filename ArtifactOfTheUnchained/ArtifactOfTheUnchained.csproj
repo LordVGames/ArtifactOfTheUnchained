@@ -15,9 +15,9 @@
 
 		<PackageReference Include="BepInEx.Core" Version="5.4.21" />
 
-		<PackageReference Include="R2API.ContentManagement" Version="1.0.6" />
+		<PackageReference Include="R2API.ContentManagement" Version="1.0.8" />
 
-		<PackageReference Include="R2API.DamageType" Version="1.1.3" />
+		<PackageReference Include="R2API.DamageType" Version="1.1.6" />
 		<PackageReference Include="R2API.Language" Version="1.0.*" />
 		<PackageReference Include="R2API.ProcType" Version="1.0.1" />
 		<PackageReference Include="Rune580.Mods.RiskOfRain2.RiskOfOptions" Version="2.8.2" />
@@ -29,7 +29,7 @@
 
 	<ItemGroup>
 	  <Reference Include="Starstorm2">
-	    <HintPath>..\..\Mod assemblies to reference\Starstorm2.dll</HintPath>
+	    <HintPath>..\..\! Assemblies to reference\Starstorm2.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 	

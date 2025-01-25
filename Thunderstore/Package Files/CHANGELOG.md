@@ -1,3 +1,6 @@
+## 2.1.0
+Added the console command `unchained_toggle_logging_nerfs` that toggles logging damage/coefficients being nerfed & proc chains being blocked as a sanity check for if the mod is even nerfing things
+
 ## 2.0.2
 Forgot to change the internal name of the artifact to the proper name
 
