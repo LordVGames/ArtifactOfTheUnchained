@@ -7,7 +7,6 @@ using BepInEx;
 using BepInEx.Configuration;
 using RoR2;
 using R2API;
-using R2API.Utils;
 using R2API.ContentManagement;
 [assembly: HG.Reflection.SearchableAttribute.OptIn]
 
@@ -16,19 +15,17 @@ namespace ArtifactOfTheUnchainedMod
     [BepInDependency(LanguageAPI.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(ProcTypeAPI.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(R2APIContentManager.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
+    // depending on DamageSourceForEnemies so i don't have to handle monster damage in a very unreliable and weird way
+    [BepInDependency(DamageSourceForEnemies.Plugin.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency(RiskOfOptions.PluginInfo.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInDependency(SS2.SS2Main.GUID, BepInDependency.DependencyFlags.SoftDependency)]
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
-    public class Main : BaseUnityPlugin
+    public class Plugin : BaseUnityPlugin
     {
         public static PluginInfo PluginInfo { get; private set; }
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "ArtifactOfTheUnchained";
-        public const string PluginVersion = "2.1.0";
-
-        public List<ArtifactBase> Artifacts = [];
-        internal static bool AllowLoggingNerfs = false;
+        public const string PluginVersion = "2.2.0";
 
         public void Awake()
         {
@@ -44,9 +41,9 @@ namespace ArtifactOfTheUnchainedMod
                 ArtifactBase artifact = (ArtifactBase)Activator.CreateInstance(artifactType);
                 ConfigOptions.BindConfigEntries(Config, artifact);
 
-                if (ConfigOptions.ServersideMode.Value)
+                if (ConfigOptions.ArtifactlessMdde.Value)
                 {
-                    On.RoR2.CharacterMaster.OnBodyDamaged += CharacterMaster_OnBodyDamaged_Serverside;
+                    On.RoR2.HealthComponent.TakeDamage += Main.HealthComponent_TakeDamage_Artifactless;
                 }
                 else
                 {
@@ -54,11 +51,19 @@ namespace ArtifactOfTheUnchainedMod
                 }
             }
         }
+    }
 
-        private void CharacterMaster_OnBodyDamaged_Serverside(On.RoR2.CharacterMaster.orig_OnBodyDamaged orig, CharacterMaster self, DamageReport damageReport)
+    public static class Main
+    {
+        public static List<ArtifactBase> Artifacts = [];
+        internal static bool AllowLoggingNerfs = false;
+
+        public static void HealthComponent_TakeDamage_Artifactless(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)
         {
-            DamageRelated.CharacterMaster_OnBodyDamaged(damageReport);
-            orig(self, damageReport);
+            DamageRelated.DebugLogDamageInfo(damageInfo, true);
+            DamageRelated.HealthComponent_TakeDamage(damageInfo);
+            orig(self, damageInfo);
+            DamageRelated.DebugLogDamageInfo(damageInfo, false);
             return;
         }
 
@@ -98,18 +103,20 @@ namespace ArtifactOfTheUnchainedMod
         }
         public override void Hooks()
         {
-            On.RoR2.CharacterMaster.OnBodyDamaged += CharacterMaster_OnBodyDamaged_Artifact;
+            On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage_Artifact;
         }
 
-        private void CharacterMaster_OnBodyDamaged_Artifact(On.RoR2.CharacterMaster.orig_OnBodyDamaged orig, CharacterMaster self, DamageReport damageReport)
+        private void HealthComponent_TakeDamage_Artifact(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)
         {
             if (!ArtifactEnabled)
             {
-                orig(self, damageReport);
+                orig(self, damageInfo);
                 return;
             }
-            DamageRelated.CharacterMaster_OnBodyDamaged(damageReport);
-            orig(self, damageReport);
+            DamageRelated.DebugLogDamageInfo(damageInfo, true);
+            DamageRelated.HealthComponent_TakeDamage(damageInfo);
+            orig(self, damageInfo);
+            DamageRelated.DebugLogDamageInfo(damageInfo, false);
             return;
         }
     }

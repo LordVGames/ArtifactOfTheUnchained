@@ -12,7 +12,7 @@ namespace ArtifactOfTheUnchainedMod
         {
             get
             {
-                return Path.Combine(Path.GetDirectoryName(Main.PluginInfo.Location), BundleName);
+                return Path.Combine(Path.GetDirectoryName(Plugin.PluginInfo.Location), BundleName);
             }
         }
 

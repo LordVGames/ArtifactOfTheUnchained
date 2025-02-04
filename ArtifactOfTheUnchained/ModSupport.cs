@@ -1,8 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using RiskOfOptions.Options;
 using RiskOfOptions;
-using RoR2;
-using SS2;
 using UnityEngine;
 
 namespace ArtifactOfTheUnchainedMod
@@ -47,82 +45,9 @@ namespace ArtifactOfTheUnchainedMod
                 );
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
-                        ConfigOptions.AllowEquipmentProcs
+                        ConfigOptions.PreventAllItemChaining
                     )
                 );
-                ModSettingsManager.AddOption(
-                    new CheckBoxOption(
-                        ConfigOptions.AllowSawmerangProcs
-                    )
-                );
-                ModSettingsManager.AddOption(
-                    new CheckBoxOption(
-                        ConfigOptions.AllowElectricBoomerangProcs
-                    )
-                );
-                ModSettingsManager.AddOption(
-                    new CheckBoxOption(
-                        ConfigOptions.AllowGenericMissileProcs
-                    )
-                );
-                ModSettingsManager.AddOption(
-                    new CheckBoxOption(
-                        ConfigOptions.AllowFireworkProcs
-                    )
-                );
-                ModSettingsManager.AddOption(
-                    new CheckBoxOption(
-                        ConfigOptions.AllowShurikenProcs
-                    )
-                );
-                ModSettingsManager.AddOption(
-                    new CheckBoxOption(
-                        ConfigOptions.AllowEgoProcs
-                    )
-                );
-                ModSettingsManager.AddOption(
-                    new CheckBoxOption(
-                        ConfigOptions.AllowGloopProcs
-                    )
-                );
-                ModSettingsManager.AddOption(
-                    new CheckBoxOption(
-                        ConfigOptions.AllowAspectProcs
-                    )
-                );
-                ModSettingsManager.AddOption(
-                    new CheckBoxOption(
-                        ConfigOptions.AllowProcCrits
-                    )
-                );
-            }
-        }
-
-        internal static class Starstorm2
-        {
-            private static bool? _modexists;
-            public static bool ModIsRunning
-            {
-                get
-                {
-                    if (_modexists == null)
-                    {
-                        _modexists = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(SS2Main.GUID);
-                    }
-                    return (bool)_modexists;
-                }
-            }
-
-            internal static ItemDef ChirrFlowerItemDef
-            {
-                get
-                {
-                    if (ModIsRunning)
-                    {
-                        return SS2Content.Items.FlowerTurret;
-                    }
-                    return null;
-                }
             }
         }
     }

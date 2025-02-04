@@ -1,3 +1,16 @@
+## 2.2.0
+Mod now depends on `DamageSourceForEnemies`
+- This is so I can gurantee if damage is truely from an item instead of jankily figuring out if damage was a monster or an item
+
+Refactored the hook & method used
+- Now uses the hook used in an older version of the mod
+- Method code is simplified
+
+Mod now detects modded procs in the proc chain
+
+Replaced individual item configs with a single option for all item procs
+- Manging all the config options was kind of a hassle, I may re-add it if there's demand for it
+
 ## 2.1.0
 Added the console command `unchained_toggle_logging_nerfs` that toggles logging damage/coefficients being nerfed & proc chains being blocked as a sanity check for if the mod is even nerfing things
 

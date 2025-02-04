@@ -4,8 +4,8 @@
     "ARTIFACT_UNCHAINED_DESC": "Nerfs proc chains and procs caused by items such as fireworks, all depending on how you've configured the mod.",
     "ARTIFACT_UNCHAINED_SANITY_CHECK_ENABLED": "The mod will now start logging every proc damage nerf & proc chain block.",
     "ARTIFACT_UNCHAINED_SANITY_CHECK_DISABLED": "The mod has stopped logging every instance of a nerf.",
-    "ARTIFACT_UNCHAINED_PROC_DAMAGE_NERF": "Proc damage has been nerfed from {0} to {1}",
-    "ARTIFACT_UNCHAINED_PROC_COEFFICIENT_NERF": "Proc coefficient has been nerfed from {0} to {1}",
+    "ARTIFACT_UNCHAINED_PROC_DAMAGE_NERF": "A chained proc's damage has been nerfed.",
+    "ARTIFACT_UNCHAINED_PROC_COEFFICIENT_NERF": "A chained proc's coefficient has been nerfed.",
     "ARTIFACT_UNCHAINED_PROC_CHAIN_BLOCKED": "A proc chain has been blocked from chaining further."
   },
   "en": {
@@ -13,8 +13,8 @@
     "ARTIFACT_UNCHAINED_DESC": "Nerfs proc chains and procs caused by items such as fireworks, all depending on how you've configured the mod.",
     "ARTIFACT_UNCHAINED_SANITY_CHECK_ENABLED": "The mod will now start logging every proc damage nerf & proc chain block.",
     "ARTIFACT_UNCHAINED_SANITY_CHECK_DISABLED": "The mod has stopped logging every instance of a nerf.",
-    "ARTIFACT_UNCHAINED_PROC_DAMAGE_NERF": "Proc damage has been nerfed from {0} to {1}",
-    "ARTIFACT_UNCHAINED_PROC_COEFFICIENT_NERF": "Proc coefficient has been nerfed from {0} to {1}",
+    "ARTIFACT_UNCHAINED_PROC_DAMAGE_NERF": "A chained proc's damage has been nerfed.",
+    "ARTIFACT_UNCHAINED_PROC_COEFFICIENT_NERF": "A chained proc's coefficient has been nerfed.",
     "ARTIFACT_UNCHAINED_PROC_CHAIN_BLOCKED": "A proc chain has been blocked from chaining further."
   }
 }
