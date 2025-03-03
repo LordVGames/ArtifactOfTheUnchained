@@ -94,9 +94,9 @@ namespace ArtifactOfTheUnchainedMod
             }
 
             BitArray moddedMask = ProcTypeAPI.GetModdedMask(procChainMask);
-            for (int i = 1; i < moddedMask.Count; i++)
+            // i starts at 2 not 0 because 0 and 1 are always our "ProccedBy" proc types so they need to be skipped
+            for (int i = 2; i < moddedMask.Count; i++)
             {
-                // i starts at 1 not 0 because 0 is always our ProccedByItem proc type
                 if (moddedMask.Get(i))
                 {
                     numberOfProcsInChain++;

@@ -1,6 +1,6 @@
 ﻿{
 	"name": "ArtifactOfTheUnchained",
-	"version_number": "2.3.0",
+	"version_number": "2.3.1",
 	"website_url": "https://github.com/LordVGames/ArtifactOfTheUnchained",
 	"description": "Adds a highly configurable artifact that lets you customize how proc chains and items that start proc chains work.",
 	"dependencies": [

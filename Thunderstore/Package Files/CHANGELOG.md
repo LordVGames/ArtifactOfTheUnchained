@@ -1,5 +1,9 @@
+## 2.3.1
+Fixed the mod's new ProcType not being skipped when checking for modded procs in the chain
+
 ## 2.3.0
 Procs from items now have separate config values for damage/proc coefficient nerfs
+
 Added a config option to blacklist survivors who do not have proper `DamageSource`s setup yet and/or rely on SeekersPatcher
 - Any survivors that are like this have the artifact detect their attacks as item damage, which heavily nerfs the survivor's damage.
 - Adding a survivor to this blacklist will make them stronger than others since they aren't receiving nerfs for procs from items, but it's better than having barely any damage.
