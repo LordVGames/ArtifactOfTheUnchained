@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using RiskOfOptions.Options;
 using RiskOfOptions;
 using UnityEngine;
@@ -28,11 +29,26 @@ namespace ArtifactOfTheUnchainedMod
                 ModSettingsManager.SetModIcon(Assets.AssetBundle.LoadAsset<Sprite>("RoOIcon.png"));
                 ModSettingsManager.SetModDescription("Adds an artifact that prevents your items from proccing your on-hit items for you.");
 
+
                 ModSettingsManager.AddOption(
-                    new IntFieldOption(
-                        ConfigOptions.ProcChainAmountLimit
+                    new StringInputFieldOption(
+                        ConfigOptions.ItemProcNerfBodyBlacklist
                     )
                 );
+
+
+                ModSettingsManager.AddOption(
+                    new FloatFieldOption(
+                        ConfigOptions.ProcFromItemDamageNerfToPercent
+                    )
+                );
+                ModSettingsManager.AddOption(
+                    new FloatFieldOption(
+                        ConfigOptions.ProcFromItemCoefficientNerfToPercent
+                    )
+                );
+
+
                 ModSettingsManager.AddOption(
                     new FloatFieldOption(
                         ConfigOptions.ProcChainDamageNerfToPercent
@@ -43,6 +59,13 @@ namespace ArtifactOfTheUnchainedMod
                         ConfigOptions.ProcChainCoefficientNerfToPercent
                     )
                 );
+                ModSettingsManager.AddOption(
+                    new IntFieldOption(
+                        ConfigOptions.ProcChainAmountLimit
+                    )
+                );
+
+
                 ModSettingsManager.AddOption(
                     new CheckBoxOption(
                         ConfigOptions.PreventAllItemChaining

@@ -22,5 +22,13 @@ namespace ArtifactOfTheUnchainedMod
         internal static void Warning(object data) => _logSource.LogWarning(data);
         internal static void Error(object data) => _logSource.LogError(data);
         internal static void Fatal(object data) => _logSource.LogFatal(data);
+        internal static void NerfedProc(string message)
+        {
+            if (!Main.AllowLoggingNerfs)
+            {
+                return;
+            }
+            Info(message);
+        }
     }
 }

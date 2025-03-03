@@ -1,11 +1,15 @@
-﻿using RoR2; 
+﻿using System;
+using System.Collections;
+using RoR2; 
 using R2API;
+using static ArtifactOfTheUnchainedMod.Main;
 
 namespace ArtifactOfTheUnchainedMod
 {
     internal static class DamageRelated
     {
         public static ModdedProcType ProccedByItem;
+        public static ModdedProcType ProccedByProc;
 
         internal static void HealthComponent_TakeDamage(DamageInfo damageInfo)
         {
@@ -18,31 +22,88 @@ namespace ArtifactOfTheUnchainedMod
                 return;
             }
 
-            bool isProcChainPastLimit = IsProcChainPastLimit(damageInfo.procChainMask);
-            if (isProcChainPastLimit || ConfigOptions.PreventAllItemChaining.Value)
+
+            int procsInChain = GetProcCountInChain(damageInfo.procChainMask);
+            if (procsInChain > 0)
             {
-                damageInfo.procCoefficient = 0;
+                if (damageInfo.procChainMask.HasModdedProc(ProccedByProc))
+                {
+                    NerfProcFromProc(damageInfo, procsInChain);
+                    // don't want to be doing the proc chain nerf AND the item proc nerf
+                    return;
+                }
+                else
+                {
+                    damageInfo.procChainMask.AddModdedProc(ProccedByProc);
+                }
             }
+
+
             if (damageInfo.procChainMask.HasModdedProc(ProccedByItem))
             {
-                if (Main.AllowLoggingNerfs && ConfigOptions.ProcChainDamageNerfToPercent.Value != 1)
+                if (!IsAttackerBlacklisted(damageInfo.attacker))
                 {
-                    Log.Info(Language.GetStringFormatted("ARTIFACT_UNCHAINED_PROC_DAMAGE_NERF"));
+                    NerfProcFromItem(damageInfo);
                 }
-                damageInfo.damage *= ConfigOptions.ProcChainDamageNerfToPercent.Value;
-                if (!isProcChainPastLimit)
-                {
-                    if (Main.AllowLoggingNerfs && ConfigOptions.ProcChainCoefficientNerfToPercent.Value != 1)
-                    {
-                        Log.Info(Language.GetStringFormatted("ARTIFACT_UNCHAINED_PROC_COEFFICIENT_NERF"));
-                    }
-                    damageInfo.procCoefficient *= ConfigOptions.ProcChainCoefficientNerfToPercent.Value;
-                }
-                return;
             }
-            damageInfo.procChainMask.AddModdedProc(ProccedByItem);
+            else
+            {
+                damageInfo.procChainMask.AddModdedProc(ProccedByItem);
+            }
         }
 
+        private static void NerfProcFromProc(DamageInfo damageInfo, int procsInChain)
+        {
+            if (procsInChain > ConfigOptions.ProcChainAmountLimit.Value && ConfigOptions.ProcChainAmountLimit.Value != -1)
+            {
+                damageInfo.procCoefficient = 0;
+                Log.NerfedProc(NerfLoggingMessages.ProcChainBlocked);
+            }
+            else
+            {
+                damageInfo.procCoefficient *= ConfigOptions.ProcChainCoefficientNerfToPercent.Value;
+                Log.NerfedProc(NerfLoggingMessages.ProcChainCoefficientNerf);
+            }
+
+            damageInfo.damage *= ConfigOptions.ProcChainDamageNerfToPercent.Value;
+            Log.NerfedProc(NerfLoggingMessages.ProcChainDamageNerf);
+        }
+
+        private static void NerfProcFromItem(DamageInfo damageInfo)
+        {
+            damageInfo.procCoefficient *= ConfigOptions.ProcFromItemCoefficientNerfToPercent.Value;
+            Log.NerfedProc(NerfLoggingMessages.ProcFrontItemDamageNerf);
+
+            damageInfo.damage *= ConfigOptions.ProcFromItemDamageNerfToPercent.Value;
+            Log.NerfedProc(NerfLoggingMessages.ProcFrontItemCoefficientNerf);
+        }
+
+
+
+        internal static int GetProcCountInChain(ProcChainMask procChainMask)
+        {
+            int numberOfProcsInChain = 0;
+            // i don't really know bitwise stuff yet so this probably isn't that good performance-wise
+            // but then again this first for loop is also kinda based on the game's procchainmask AppendToStringBuilder code so
+            for (ProcType procType = 0; procType < ProcType.Count; procType += 1U)
+            {
+                if (procChainMask.HasProc(procType))
+                {
+                    numberOfProcsInChain++;
+                }
+            }
+
+            BitArray moddedMask = ProcTypeAPI.GetModdedMask(procChainMask);
+            for (int i = 1; i < moddedMask.Count; i++)
+            {
+                // i starts at 1 not 0 because 0 is always our ProccedByItem proc type
+                if (moddedMask.Get(i))
+                {
+                    numberOfProcsInChain++;
+                }
+            }
+            return numberOfProcsInChain;
+        }
         internal static void DebugLogDamageInfo(DamageInfo damageInfo, bool loggingBeforeChanges)
         {
 #if DEBUG
@@ -70,42 +131,6 @@ namespace ArtifactOfTheUnchainedMod
             Log.Debug($"procChainMask is {damageInfo.procChainMask}");
             Log.Debug($"procCoefficient is {damageInfo.procCoefficient}");
 #endif
-        }
-
-        internal static bool IsProcChainPastLimit(ProcChainMask procChainMask)
-        {
-            // -1 is for those who configured for vanilla behavior
-            if (ConfigOptions.ProcChainAmountLimit.Value == -1)
-            {
-                return false;
-            }
-            Log.Debug($"IsProcChainPastLimit: ConfigOptions.ProcChainAmountLimit.Value is {ConfigOptions.ProcChainAmountLimit.Value}");
-            return GetProcCountInChain(procChainMask) > ConfigOptions.ProcChainAmountLimit.Value;
-        }
-
-        internal static int GetProcCountInChain(ProcChainMask procChainMask)
-        {
-            int numberOfProcsInChain = 0;
-            // i don't really know bitwise stuff yet so this probably isn't that good performance-wise
-            // but then again this first for loop is also kinda based on the game's procchainmask AppendToStringBuilder code
-            for (ProcType procType = 0; procType < ProcType.Count; procType += 1U)
-            {
-                if (procChainMask.HasProc(procType))
-                {
-                    numberOfProcsInChain++;
-                }
-            }
-            var moddedMask = ProcTypeAPI.GetModdedMask(procChainMask);
-            for (int i = 1; i < moddedMask.Count; i++)
-            {
-                // i starts at 1 not 0 because 0 is always our ProccedByItem proc type
-                if (moddedMask.Get(i))
-                {
-                    numberOfProcsInChain++;
-                }
-            }
-            Log.Debug($"numberOfProcsInChain is {numberOfProcsInChain}");
-            return numberOfProcsInChain;
         }
     }
 }
