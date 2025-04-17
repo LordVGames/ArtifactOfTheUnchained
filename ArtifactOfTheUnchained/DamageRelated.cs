@@ -39,7 +39,7 @@ namespace ArtifactOfTheUnchainedMod
                 damageInfo.procCoefficient = 0;
                 return;
             }
-            
+
             /*
              * Important info:
              * We don't return when adding a proctype so that if multiple need to be applied they will
@@ -69,7 +69,7 @@ namespace ArtifactOfTheUnchainedMod
                     else
                     {
                         damageInfo.procChainMask.AddModdedProc(ProccedByProc);
-                        return;
+                        // no return here in case a proc from an item/equipment lands so that the nerf from those can be applied THEN the next proc will be nerfed for chaining
                     }
                 }
             }
