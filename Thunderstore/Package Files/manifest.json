@@ -1,14 +1,15 @@
 ﻿{
 	"name": "ArtifactOfTheUnchained",
-	"version_number": "2.3.1",
+	"version_number": "2.4.0",
 	"website_url": "https://github.com/LordVGames/ArtifactOfTheUnchained",
-	"description": "Adds a highly configurable artifact that lets you customize how proc chains and items that start proc chains work.",
+	"description": "Adds a highly configurable artifact that lets you customize how proc chains and items/equipments that start proc chains work.",
 	"dependencies": [
-		"bbepis-BepInExPack-5.4.2108",
-		"RiskofThunder-HookGenPatcher-1.2.3",
+		"bbepis-BepInExPack-5.4.2117",
+		"RiskofThunder-HookGenPatcher-1.2.5",
 		"RiskofThunder-R2API_Language-1.0.1",
-		"RiskofThunder-R2API_ContentManagement-1.0.6",
-		"RiskofThunder-R2API_ProcType-1.0.1",
-		"LordVGames-DamageSourceForEnemies-1.0.0"
+		"RiskofThunder-R2API_ContentManagement-1.0.8",
+		"RiskofThunder-R2API_ProcType-1.0.2",
+		"LordVGames-DamageSourceForEnemies-1.2.1",
+		"LordVGames-DamageSourceForEquipment-1.0.1"
 	]
 }

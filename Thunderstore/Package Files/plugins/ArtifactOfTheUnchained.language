@@ -1,21 +1,26 @@
 {
   "strings": {
     "ARTIFACT_UNCHAINED_NAME": "Artifact of the Unchained",
-    "ARTIFACT_UNCHAINED_DESC": "Nerfs proc chains and procs caused by items such as fireworks, all depending on how you've configured the mod.",
+    "ARTIFACT_UNCHAINED_DESC": "Nerfs proc chains and procs caused by equipments and other items, all depending on how you've configured the mod.",
 
     "ARTIFACT_UNCHAINED_SANITY_CHECK_ENABLED": "The mod will now start logging every proc damage nerf & proc chain block.",
     "ARTIFACT_UNCHAINED_SANITY_CHECK_DISABLED": "The mod has stopped logging every instance of a nerf.",
+
+    "ARTIFACT_UNCHAINED_NO_ITEM_PROC": "Damage from not from a skill detected, preventing procs due to config.",
 
     "ARTIFACT_UNCHAINED_PROC_CHAIN_DAMAGE_NERF": "A chained proc's damage has been nerfed.",
     "ARTIFACT_UNCHAINED_PROC_CHAIN_COEFFICIENT_NERF": "A chained proc's proc coefficient has been nerfed.",
     "ARTIFACT_UNCHAINED_PROC_CHAIN_BLOCKED": "A proc chain has been blocked from possibly chaining further.",
 
     "ARTIFACT_UNCHAINED_ITEM_PROC_DAMAGE_NERF": "The damage of a proc from an item has been nerfed.",
-    "ARTIFACT_UNCHAINED_ITEM_PROC_COEFFICIENT_NERF": "The proc coefficient of a proc from an item has been nerfed."
+    "ARTIFACT_UNCHAINED_ITEM_PROC_COEFFICIENT_NERF": "The proc coefficient of a proc from an item has been nerfed.",
+
+    "ARTIFACT_UNCHAINED_EQUIPMENT_PROC_DAMAGE_NERF": "The damage of a proc from an equipment has been nerfed.",
+    "ARTIFACT_UNCHAINED_EQUIPMENT_PROC_COEFFICIENT_NERF": "The proc coefficient of a proc from an equipment has been nerfed."
   },
   "en": {
     "ARTIFACT_UNCHAINED_NAME": "Artifact of the Unchained",
-    "ARTIFACT_UNCHAINED_DESC": "Nerfs proc chains and procs caused by items such as fireworks, all depending on how you've configured the mod.",
+    "ARTIFACT_UNCHAINED_DESC": "Nerfs proc chains and procs caused by equipments and other items, all depending on how you've configured the mod.",
 
     "ARTIFACT_UNCHAINED_SANITY_CHECK_ENABLED": "The mod will now start logging every proc damage nerf & proc chain block.",
     "ARTIFACT_UNCHAINED_SANITY_CHECK_DISABLED": "The mod has stopped logging every instance of a nerf.",
@@ -25,7 +30,9 @@
     "ARTIFACT_UNCHAINED_PROC_CHAIN_BLOCKED": "A proc chain has been blocked from possibly chaining further.",
 
     "ARTIFACT_UNCHAINED_ITEM_PROC_DAMAGE_NERF": "The damage of a proc created from an item's hit has been nerfed.",
-    "ARTIFACT_UNCHAINED_ITEM_PROC_COEFFICIENT_NERF": "The proc coefficient of a proc created from an item's hit has been nerfed."
-    ".\"",
+    "ARTIFACT_UNCHAINED_ITEM_PROC_COEFFICIENT_NERF": "The proc coefficient of a proc created from an item's hit has been nerfed.",
+
+    "ARTIFACT_UNCHAINED_EQUIPMENT_PROC_DAMAGE_NERF": "The damage of a proc from an equipment has been nerfed.",
+    "ARTIFACT_UNCHAINED_EQUIPMENT_PROC_COEFFICIENT_NERF": "The proc coefficient of a proc from an equipment has been nerfed."
   }
 }

@@ -9,7 +9,7 @@ namespace ArtifactOfTheUnchainedMod
     {
         public override string ArtifactLangTokenName => "UNCHAINED";
         public override string ArtifactName => "Artifact of the Unchained";
-        public override string ArtifactDescription => "Nerfs proc chains and procs caused by items such as fireworks, all depending on how you've configured the mod.";
+        public override string ArtifactDescription => "Nerfs proc chains and procs caused by equipments and other items, all depending on how you've configured the mod.";
         public override Sprite ArtifactEnabledIcon => Assets.AssetBundle.LoadAsset<Sprite>("NoProcChainsArtifactIcon_Enabled.png");
         public override Sprite ArtifactDisabledIcon => Assets.AssetBundle.LoadAsset<Sprite>("NoProcChainsArtifactIcon_Disabled.png");
         public override void Init(ConfigFile config)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Linq;
 using RoR2; 
 using R2API;
 using static ArtifactOfTheUnchainedMod.Main;
@@ -8,14 +9,22 @@ namespace ArtifactOfTheUnchainedMod
 {
     internal static class DamageRelated
     {
-        public static ModdedProcType ProccedByItem;
         public static ModdedProcType ProccedByProc;
+        public static ModdedProcType ProccedByItem;
+        public static ModdedProcType ProccedByEquipment;
+        // some items have a proc type added to the chain even though they aren't actual proc items (i.e nkuhanas, razorwire, bands, etc)
+        private static readonly ProcType[] _fakeProcTypes = [ProcType.HealNova, ProcType.Thorns, ProcType.Rings];
 
         internal static void HealthComponent_TakeDamage(DamageInfo damageInfo)
         {
-            if (!damageInfo.attacker)
+            if (!damageInfo.attacker || damageInfo.damageType.damageType.HasFlag(DamageType.DoT))
             {
                 return;
+            }
+            if (ModSupport.Starstorm2.ModIsRunning)
+            {
+                // relic of force procs on literally every hit including skills so this HAS to happen super early
+                ModSupport.Starstorm2.HandleRelicOfForceDamageSource(damageInfo);
             }
             if (damageInfo.damageType.IsDamageSourceSkillBased)
             {
@@ -23,23 +32,60 @@ namespace ArtifactOfTheUnchainedMod
             }
 
 
-            int procsInChain = GetProcCountInChain(damageInfo.procChainMask);
-            if (procsInChain > 0)
+
+            if (ConfigOptions.PreventAllItemChaining.Value)
             {
-                if (damageInfo.procChainMask.HasModdedProc(ProccedByProc))
+                Log.NerfedProc(NerfLoggingMessages.ProcNotFromSkillBlocked);
+                damageInfo.procCoefficient = 0;
+                return;
+            }
+            
+            /*
+             * Important info:
+             * We don't return when adding a proctype so that if multiple need to be applied they will
+             * There's no return on item & equipment nerfs because you can't get both
+             * And there IS a return on proc chain nerfs because it's posible to be marked for proc chain nerfs and other nerfs
+             * 
+             * Also let's visualize some scenarios for future reference:
+             * ATG from skill:
+             * Gets marked for proc chain nerfs, that's it
+             * Polylute from that ATG:
+             * Proc chain nerf mark gets detected, nerfs applied, and that's it
+             * Proc from an equipment that later procs something else:
+             * Initial proc hits, equipment proc mark applied, equipment marked proc hits and equipment proc nerf is applied, then the proc chain mark is also applied. Chained proc happens, proc chain mark detected, nerfed for proc chaining and that's it
+             * ^^^ This process is pretty much the same if it comes from an item
+             */
+
+            if (damageInfo.procChainMask.mask > 0)
+            {
+                int procsInChain = GetProcCountInChain(damageInfo.procChainMask);
+                if (procsInChain > 0)
                 {
-                    NerfProcFromProc(damageInfo, procsInChain);
-                    // don't want to be doing the proc chain nerf AND the item proc nerf
-                    return;
-                }
-                else
-                {
-                    damageInfo.procChainMask.AddModdedProc(ProccedByProc);
+                    if (damageInfo.procChainMask.HasModdedProc(ProccedByProc))
+                    {
+                        NerfProcFromProc(damageInfo, procsInChain);
+                        return;
+                    }
+                    else
+                    {
+                        damageInfo.procChainMask.AddModdedProc(ProccedByProc);
+                        return;
+                    }
                 }
             }
 
 
-            if (damageInfo.procChainMask.HasModdedProc(ProccedByItem))
+            if (damageInfo.procChainMask.HasModdedProc(ProccedByEquipment))
+            {
+                NerfProcFromEquipment(damageInfo);
+            }
+            else if (damageInfo.damageType.damageSource == DamageSource.Equipment)
+            {
+                damageInfo.procChainMask.AddModdedProc(ProccedByEquipment);
+            }
+
+
+            else if (damageInfo.procChainMask.HasModdedProc(ProccedByItem))
             {
                 if (!IsAttackerBlacklisted(damageInfo.attacker))
                 {
@@ -59,23 +105,47 @@ namespace ArtifactOfTheUnchainedMod
                 damageInfo.procCoefficient = 0;
                 Log.NerfedProc(NerfLoggingMessages.ProcChainBlocked);
             }
-            else
+            else if (ConfigOptions.ProcChainCoefficientNerfToPercent.Value != 1)
             {
                 damageInfo.procCoefficient *= ConfigOptions.ProcChainCoefficientNerfToPercent.Value;
                 Log.NerfedProc(NerfLoggingMessages.ProcChainCoefficientNerf);
             }
 
-            damageInfo.damage *= ConfigOptions.ProcChainDamageNerfToPercent.Value;
-            Log.NerfedProc(NerfLoggingMessages.ProcChainDamageNerf);
+            if (ConfigOptions.ProcChainDamageNerfToPercent.Value != 1)
+            {
+                damageInfo.damage *= ConfigOptions.ProcChainDamageNerfToPercent.Value;
+                Log.NerfedProc(NerfLoggingMessages.ProcChainDamageNerf);
+            }
         }
 
         private static void NerfProcFromItem(DamageInfo damageInfo)
         {
-            damageInfo.procCoefficient *= ConfigOptions.ProcFromItemCoefficientNerfToPercent.Value;
-            Log.NerfedProc(NerfLoggingMessages.ProcFrontItemDamageNerf);
+            if (ConfigOptions.ProcFromItemCoefficientNerfToPercent.Value != 1)
+            {
+                damageInfo.procCoefficient *= ConfigOptions.ProcFromItemCoefficientNerfToPercent.Value;
+                Log.NerfedProc(NerfLoggingMessages.ProcFromItemCoefficientNerf);
+            }
 
-            damageInfo.damage *= ConfigOptions.ProcFromItemDamageNerfToPercent.Value;
-            Log.NerfedProc(NerfLoggingMessages.ProcFrontItemCoefficientNerf);
+            if (ConfigOptions.ProcFromItemDamageNerfToPercent.Value != 1)
+            {
+                damageInfo.damage *= ConfigOptions.ProcFromItemDamageNerfToPercent.Value;
+                Log.NerfedProc(NerfLoggingMessages.ProcFromItemDamageNerf);
+            }
+        }
+
+        private static void NerfProcFromEquipment(DamageInfo damageInfo)
+        {
+            if (ConfigOptions.ProcFromEquipmentCoefficientNerfToPercent.Value != 1)
+            {
+                damageInfo.procCoefficient *= ConfigOptions.ProcFromEquipmentCoefficientNerfToPercent.Value;
+                Log.NerfedProc(NerfLoggingMessages.ProcFromEquipmentDamageNerf);
+            }
+
+            if (ConfigOptions.ProcFromEquipmentDamageNerfToPercent.Value != 1)
+            {
+                damageInfo.damage *= ConfigOptions.ProcFromEquipmentDamageNerfToPercent.Value;
+                Log.NerfedProc(NerfLoggingMessages.ProcFromEquipmentCoefficientNerf);
+            }
         }
 
 
@@ -83,30 +153,52 @@ namespace ArtifactOfTheUnchainedMod
         internal static int GetProcCountInChain(ProcChainMask procChainMask)
         {
             int numberOfProcsInChain = 0;
-            // i don't really know bitwise stuff yet so this probably isn't that good performance-wise
+            // i don't really know bitwise stuff yet so this probably isn't that good
             // but then again this first for loop is also kinda based on the game's procchainmask AppendToStringBuilder code so
             for (ProcType procType = 0; procType < ProcType.Count; procType += 1U)
             {
-                if (procChainMask.HasProc(procType))
+                if (procChainMask.HasProc(procType) && !_fakeProcTypes.Contains(procType))
                 {
                     numberOfProcsInChain++;
                 }
             }
 
             BitArray moddedMask = ProcTypeAPI.GetModdedMask(procChainMask);
-            // i starts at 2 not 0 because 0 and 1 are always our "ProccedBy" proc types so they need to be skipped
-            for (int i = 2; i < moddedMask.Count; i++)
+            for (int i = 0; i < moddedMask.Count; i++)
             {
                 if (moddedMask.Get(i))
                 {
                     numberOfProcsInChain++;
                 }
             }
+            numberOfProcsInChain = RemoveMarkProcsFromProcCount(procChainMask, numberOfProcsInChain);
+            Log.Debug($"numberOfProcsInChain is {numberOfProcsInChain}");
+
+            return numberOfProcsInChain;
+        }
+        private static int RemoveMarkProcsFromProcCount(ProcChainMask procChainMask, int numberOfProcsInChain)
+        {
+            if (procChainMask.HasModdedProc(ProccedByEquipment))
+            {
+                numberOfProcsInChain--;
+            }
+            if (procChainMask.HasModdedProc(ProccedByItem))
+            {
+                numberOfProcsInChain--;
+            }
+            if (procChainMask.HasModdedProc(ProccedByProc))
+            {
+                numberOfProcsInChain--;
+            }
             return numberOfProcsInChain;
         }
         internal static void DebugLogDamageInfo(DamageInfo damageInfo, bool loggingBeforeChanges)
         {
 #if DEBUG
+            if (damageInfo.inflictor != null && damageInfo.inflictor.name == "DotController(Clone)")
+            {
+                return;
+            }
             if (loggingBeforeChanges)
             {
                 Log.Warning("BEFORE");

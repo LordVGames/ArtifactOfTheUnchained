@@ -1,3 +1,22 @@
+## 2.4.0
+Added config options for nerfing damage/proc coefficient of procs caused by equipments
+- Mod now also depends on [DamageSourceForEquipments](https://thunderstore.io/package/LordVGames/DamageSourceForEquipment/) to do this until Gearbox implements it themselves
+
+Re-organized config entries
+- Double check your configs!!!
+
+Re-implemented the "Prevent ALL items from proccing" config option
+- It literally isn't used anywhere idk when I removed code for it but it works again
+
+Mod now ignores procs in the chain added by items that don't actually work as proc items
+- This affects items like nkuhana's, razorwire, and the elemental bands
+
+Fixed hits from SS2's Relic of Force bypassing the artifact's nerfs
+- It copies the DamageSource of an attack, including hits from skills, so procs from relic of force hits from skill hits wouldn't get nerfed.
+
+Fixed nerf logging messages not working
+
+
 ## 2.3.1
 Fixed the mod's new ProcType not being skipped when checking for modded procs in the chain
 

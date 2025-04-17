@@ -5,6 +5,7 @@ using System.Text;
 using BepInEx;
 using RoR2;
 using UnityEngine;
+using UnityEngine.UIElements.UIR;
 
 namespace ArtifactOfTheUnchainedMod
 {
@@ -12,12 +13,17 @@ namespace ArtifactOfTheUnchainedMod
     {
         internal static class NerfLoggingMessages
         {
+            internal static string ProcNotFromSkillBlocked;
+
             internal static string ProcChainDamageNerf;
             internal static string ProcChainCoefficientNerf;
             internal static string ProcChainBlocked;
 
-            internal static string ProcFrontItemDamageNerf;
-            internal static string ProcFrontItemCoefficientNerf;
+            internal static string ProcFromItemDamageNerf;
+            internal static string ProcFromItemCoefficientNerf;
+
+            internal static string ProcFromEquipmentDamageNerf;
+            internal static string ProcFromEquipmentCoefficientNerf;
         }
 
         public static List<ArtifactBase> Artifacts = [];
@@ -55,12 +61,17 @@ namespace ArtifactOfTheUnchainedMod
 
         internal static void SetupLanguageSpecificStrings()
         {
+            NerfLoggingMessages.ProcNotFromSkillBlocked = Language.GetStringFormatted("ARTIFACT_UNCHAINED_NO_ITEM_PROC");
+
             NerfLoggingMessages.ProcChainDamageNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_PROC_CHAIN_DAMAGE_NERF");
             NerfLoggingMessages.ProcChainCoefficientNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_PROC_CHAIN_COEFFICIENT_NERF");
             NerfLoggingMessages.ProcChainBlocked = Language.GetStringFormatted("ARTIFACT_UNCHAINED_PROC_CHAIN_BLOCKED");
 
-            NerfLoggingMessages.ProcFrontItemCoefficientNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_ITEM_PROC_DAMAGE_NERF");
-            NerfLoggingMessages.ProcFrontItemDamageNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_ITEM_PROC_COEFFICIENT_NERF");
+            NerfLoggingMessages.ProcFromItemCoefficientNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_ITEM_PROC_DAMAGE_NERF");
+            NerfLoggingMessages.ProcFromItemDamageNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_ITEM_PROC_COEFFICIENT_NERF");
+
+            NerfLoggingMessages.ProcFromEquipmentCoefficientNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_EQUIPMENT_PROC_DAMAGE_NERF");
+            NerfLoggingMessages.ProcFromEquipmentDamageNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_EQUIPMENT_PROC_COEFFICIENT_NERF");
         }
 
         internal static bool IsAttackerBlacklisted(GameObject attackerGameObject)
@@ -75,7 +86,7 @@ namespace ArtifactOfTheUnchainedMod
                 return false;
             }
 
-            // i don't like using Substring here but afaik there's not a better way
+            // i don't like using Substring & Contains here but afaik there's no better way
             string attackerBodyName = attackerGameObject.name.Substring(0, attackerGameObject.name.Length - 7);
             if (ConfigOptions.ItemProcNerfBodyBlacklistArray.Contains(attackerBodyName))
             {
