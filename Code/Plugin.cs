@@ -24,7 +24,7 @@ namespace ArtifactOfTheUnchainedMod
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "ArtifactOfTheUnchained";
-        public const string PluginVersion = "2.5.0";
+        public const string PluginVersion = "2.5.1";
 
         public void Awake()
         {
