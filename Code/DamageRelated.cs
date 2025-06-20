@@ -17,28 +17,45 @@ namespace ArtifactOfTheUnchainedMod
 
         internal static void HealthComponent_TakeDamage(DamageInfo damageInfo)
         {
-            if (!damageInfo.attacker || damageInfo.damageType.damageType.HasFlag(DamageType.DoT))
+            if (damageInfo.attacker == null || damageInfo.damageType.damageType.HasFlag(DamageType.DoT))
             {
                 return;
             }
             if (ModSupport.Starstorm2.ModIsRunning)
             {
-                // relic of force procs on literally every hit including skills so this HAS to happen super early
+                // relic of force procs on literally every hit including skills so this before then
                 ModSupport.Starstorm2.HandleRelicOfForceDamageSource(damageInfo);
+
+
+                if (ModSupport.Starstorm2.IsBetaVersion)
+                {
+                    // grabbing EtherealsCount from mod support only once to help a tiny bit on performance
+                    int ss2EtherealsCount = ModSupport.Starstorm2.EtherealsCount;
+                    if (ss2EtherealsCount > 0)
+                    {
+                        if (!damageInfo.damageType.IsDamageSourceSkillBased && damageInfo.damageType.damageSource != DamageSource.Equipment)
+                        {
+                            // i would filter for only player damage but that requires a GetComponent call
+                            // and there's NO WAY i'm doing GetComponent in this part since this will run super often if it's true
+                            // which means monster procs are gonna get nerfed too
+                            // but monsters they get +100 levels for every ethereal level anyways so it's not really that much of a nerf in terms of damage for them
+                            float etherealDamageMult = 1 - (ConfigOptions.NerfProcDamagePerEthereal.Value * ss2EtherealsCount);
+                            damageInfo.damage *= etherealDamageMult;
+                        }
+                    }
+                }
             }
             if (damageInfo.damageType.IsDamageSourceSkillBased)
             {
                 return;
             }
-
-
-
             if (ConfigOptions.PreventAllItemChaining.Value)
             {
-                Log.NerfedProc(NerfLoggingMessages.ProcNotFromSkillBlocked);
+                Log.Debug(NerfLoggingMessages.ProcNotFromSkillBlocked);
                 damageInfo.procCoefficient = 0;
                 return;
             }
+
 
             /*
              * Important info:
@@ -46,14 +63,21 @@ namespace ArtifactOfTheUnchainedMod
              * There's no return on item & equipment nerfs because you can't get both
              * And there IS a return on proc chain nerfs because it's posible to be marked for proc chain nerfs and other nerfs
              * 
-             * Also let's visualize some scenarios for future reference:
+             * Walkthrough of the process for how the code handles a proc chain:
              * ATG from skill:
-             * Gets marked for proc chain nerfs, that's it
+             * * Proc chain mark is applied for any future procs in the chain
              * Polylute from that ATG:
-             * Proc chain nerf mark gets detected, nerfs applied, and that's it
-             * Proc from an equipment that later procs something else:
-             * Initial proc hits, equipment proc mark applied, equipment marked proc hits and equipment proc nerf is applied, then the proc chain mark is also applied. Chained proc happens, proc chain mark detected, nerfed for proc chaining and that's it
-             * ^^^ This process is pretty much the same if it comes from an item
+             * * Proc chain nerf mark gets detected, nerfs get applied
+             * 
+             * Another walkthrough:
+             * Use damaging equipment:
+             * * It procs something, equipment proc mark applied to proc
+             * Proc from an equipment hits:
+             * * Nerfed based on equipment proc settings, proc chain mark is applied for any future procs in the chain
+             * Proc from a proc from an equipment:
+             * * Proc chain mark is detected before equipment proc mark, so the proc chain nerfs takes effect instead of the equipment proc nerfs.
+             * 
+             * ^^^^^^ This process is pretty much the same if it comes from an item
              */
 
             if (damageInfo.procChainMask.mask > 0)
@@ -61,6 +85,12 @@ namespace ArtifactOfTheUnchainedMod
                 int procsInChain = GetProcCountInChain(damageInfo.procChainMask);
                 if (procsInChain > 0)
                 {
+                    if (ConfigOptions.ProcChainAmountLimit.Value == 0)
+                    {
+                        Log.Debug(NerfLoggingMessages.ProcBlockedForZeroLimit);
+                        damageInfo.procCoefficient = 0;
+                        return;
+                    }
                     if (damageInfo.procChainMask.HasModdedProc(ProccedByProc))
                     {
                         NerfProcFromProc(damageInfo, procsInChain);
@@ -83,8 +113,6 @@ namespace ArtifactOfTheUnchainedMod
             {
                 damageInfo.procChainMask.AddModdedProc(ProccedByEquipment);
             }
-
-
             else if (damageInfo.procChainMask.HasModdedProc(ProccedByItem))
             {
                 if (!IsAttackerBlacklisted(damageInfo.attacker))
@@ -92,7 +120,7 @@ namespace ArtifactOfTheUnchainedMod
                     NerfProcFromItem(damageInfo);
                 }
             }
-            else
+            else if (!damageInfo.procChainMask.HasModdedProc(ProccedByProc))
             {
                 damageInfo.procChainMask.AddModdedProc(ProccedByItem);
             }
@@ -103,18 +131,18 @@ namespace ArtifactOfTheUnchainedMod
             if (procsInChain > ConfigOptions.ProcChainAmountLimit.Value && ConfigOptions.ProcChainAmountLimit.Value != -1)
             {
                 damageInfo.procCoefficient = 0;
-                Log.NerfedProc(NerfLoggingMessages.ProcChainBlocked);
+                Log.Debug(NerfLoggingMessages.ProcChainBlocked);
             }
             else if (ConfigOptions.ProcChainCoefficientNerfToPercent.Value != 1)
             {
                 damageInfo.procCoefficient *= ConfigOptions.ProcChainCoefficientNerfToPercent.Value;
-                Log.NerfedProc(NerfLoggingMessages.ProcChainCoefficientNerf);
+                Log.Debug(NerfLoggingMessages.ProcChainCoefficientNerf);
             }
 
             if (ConfigOptions.ProcChainDamageNerfToPercent.Value != 1)
             {
                 damageInfo.damage *= ConfigOptions.ProcChainDamageNerfToPercent.Value;
-                Log.NerfedProc(NerfLoggingMessages.ProcChainDamageNerf);
+                Log.Debug(NerfLoggingMessages.ProcChainDamageNerf);
             }
         }
 
@@ -123,13 +151,13 @@ namespace ArtifactOfTheUnchainedMod
             if (ConfigOptions.ProcFromItemCoefficientNerfToPercent.Value != 1)
             {
                 damageInfo.procCoefficient *= ConfigOptions.ProcFromItemCoefficientNerfToPercent.Value;
-                Log.NerfedProc(NerfLoggingMessages.ProcFromItemCoefficientNerf);
+                Log.Debug(NerfLoggingMessages.ProcFromItemCoefficientNerf);
             }
 
             if (ConfigOptions.ProcFromItemDamageNerfToPercent.Value != 1)
             {
                 damageInfo.damage *= ConfigOptions.ProcFromItemDamageNerfToPercent.Value;
-                Log.NerfedProc(NerfLoggingMessages.ProcFromItemDamageNerf);
+                Log.Debug(NerfLoggingMessages.ProcFromItemDamageNerf);
             }
         }
 
@@ -138,13 +166,13 @@ namespace ArtifactOfTheUnchainedMod
             if (ConfigOptions.ProcFromEquipmentCoefficientNerfToPercent.Value != 1)
             {
                 damageInfo.procCoefficient *= ConfigOptions.ProcFromEquipmentCoefficientNerfToPercent.Value;
-                Log.NerfedProc(NerfLoggingMessages.ProcFromEquipmentDamageNerf);
+                Log.Debug(NerfLoggingMessages.ProcFromEquipmentDamageNerf);
             }
 
             if (ConfigOptions.ProcFromEquipmentDamageNerfToPercent.Value != 1)
             {
                 damageInfo.damage *= ConfigOptions.ProcFromEquipmentDamageNerfToPercent.Value;
-                Log.NerfedProc(NerfLoggingMessages.ProcFromEquipmentCoefficientNerf);
+                Log.Debug(NerfLoggingMessages.ProcFromEquipmentCoefficientNerf);
             }
         }
 
@@ -194,11 +222,17 @@ namespace ArtifactOfTheUnchainedMod
         }
         internal static void DebugLogDamageInfo(DamageInfo damageInfo, bool loggingBeforeChanges)
         {
-#if DEBUG
+            if (!ConfigOptions.EnableDebugLogging.Value)
+            {
+                return;
+            }
             if (damageInfo.inflictor != null && damageInfo.inflictor.name == "DotController(Clone)")
             {
                 return;
             }
+
+
+            Log.Debug("\n\n\n");
             if (loggingBeforeChanges)
             {
                 Log.Warning("BEFORE");
@@ -218,11 +252,15 @@ namespace ArtifactOfTheUnchainedMod
             Log.Debug($"attacker is {damageInfo.attacker}");
             Log.Debug($"crit is {damageInfo.crit}");
             Log.Debug($"damage is {damageInfo.damage}");
-            //Log.Debug($"damageType is {damageInfo.damageType}");
+            if (ModSupport.Starstorm2.ModIsRunning && ModSupport.Starstorm2.IsBetaVersion)
+            {
+                Log.Debug($"ethereal damage mult is {1 - (ConfigOptions.NerfProcDamagePerEthereal.Value * ModSupport.Starstorm2.EtherealsCount)}");
+            }
+            Log.Debug($"damageType is {damageInfo.damageType}");
             Log.Debug($"inflictor is {damageInfo.inflictor}");
             Log.Debug($"procChainMask is {damageInfo.procChainMask}");
+            Log.Debug($"real proc chain count in mask is {GetProcCountInChain(damageInfo.procChainMask)}");
             Log.Debug($"procCoefficient is {damageInfo.procCoefficient}");
-#endif
         }
     }
 }

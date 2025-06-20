@@ -33,12 +33,28 @@ namespace ArtifactOfTheUnchainedMod
             internal static void AddOptions()
             {
                 ModSettingsManager.SetModIcon(Assets.AssetBundle.LoadAsset<Sprite>("RoOIcon.png"));
-                ModSettingsManager.SetModDescription("Adds an artifact that prevents your items from proccing your on-hit items for you.");
+                ModSettingsManager.SetModDescription("Adds a highly configurable artifact that lets you customize how proc chains and procs caused by items/equipments should be nerfed.");
 
 
                 ModSettingsManager.AddOption(
+                    new CheckBoxOption(
+                        ConfigOptions.EnableDebugLogging
+                    )
+                );
+                ModSettingsManager.AddOption(
+                    new CheckBoxOption(
+                        ConfigOptions.ArtifactlessMode,
+                        true
+                    )
+                );
+                ModSettingsManager.AddOption(
                     new StringInputFieldOption(
                         ConfigOptions.ItemProcNerfBodyBlacklist
+                    )
+                );
+                ModSettingsManager.AddOption(
+                    new FloatFieldOption(
+                        ConfigOptions.NerfProcDamagePerEthereal
                     )
                 );
 
@@ -103,6 +119,34 @@ namespace ArtifactOfTheUnchainedMod
                     return (bool)_modexists;
                 }
             }
+            private static bool? _isBetaVersion;
+            internal static bool IsBetaVersion
+            {
+                get
+                {
+                    if (_isBetaVersion == null)
+                    {
+                        if (BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(SS2Main.GUID, out var pluginInfo))
+                        {
+                            // will probably come back to bite me later but it's the easiest way rn
+                            // and yes the beta's version is one behind the thunderstore's version thankfully
+                            if (pluginInfo.Metadata.Version.ToString() == "0.6.16")
+                            {
+                                _isBetaVersion = true;
+                            }
+                            else
+                            {
+                                _isBetaVersion = false;
+                            }
+                        }
+                        else
+                        {
+                            _isBetaVersion = false;
+                        }
+                    }
+                    return (bool)_isBetaVersion;
+                }
+            }
 
             [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
             internal static void HandleRelicOfForceDamageSource(DamageInfo damageInfo)
@@ -110,6 +154,15 @@ namespace ArtifactOfTheUnchainedMod
                 if (damageInfo.HasModdedDamageType(SS2.Items.RelicOfForce.relicForceDamageType))
                 {
                     damageInfo.damageType.damageSource = DamageSource.NoneSpecified;
+                }
+            }
+
+            internal static int EtherealsCount
+            {
+                [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+                get
+                {
+                    return (ModIsRunning && IsBetaVersion) ? EtherealBehavior.instance.etherealsCompleted : 0;
                 }
             }
         }

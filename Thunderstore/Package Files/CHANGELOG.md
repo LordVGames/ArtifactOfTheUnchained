@@ -1,3 +1,10 @@
+## 2.5.0
+Fixed the proc chain limit not fully working when set to 0
+Fixed the log messages for nerfing a proc's damage and nerfing a proc's coefficient being swapped
+Changed the default values for chained proc damage from various sources
+Added a few config options to nerf ALL proc damage based on the completed ethereal teleporter count from the SS2 beta
+- This was made while the beta still worked. Idk if the beta still does so if you're not using it then this won't be used
+
 ## 2.4.0
 Added config options for nerfing damage/proc coefficient of procs caused by equipments
 - Mod now also depends on [DamageSourceForEquipments](https://thunderstore.io/package/LordVGames/DamageSourceForEquipment/) to do this until Gearbox implements it themselves

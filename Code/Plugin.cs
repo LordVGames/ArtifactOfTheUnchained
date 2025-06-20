@@ -5,8 +5,6 @@ using BepInEx;
 using R2API;
 using R2API.ContentManagement;
 using RoR2;
-using HarmonyLib;
-[assembly: HG.Reflection.SearchableAttribute.OptIn]
 
 namespace ArtifactOfTheUnchainedMod
 {
@@ -26,7 +24,7 @@ namespace ArtifactOfTheUnchainedMod
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "LordVGames";
         public const string PluginName = "ArtifactOfTheUnchained";
-        public const string PluginVersion = "2.4.0";
+        public const string PluginVersion = "2.5.0";
 
         public void Awake()
         {
@@ -36,7 +34,7 @@ namespace ArtifactOfTheUnchainedMod
             DamageRelated.ProccedByItem = ProcTypeAPI.ReserveProcType();
             DamageRelated.ProccedByProc = ProcTypeAPI.ReserveProcType();
             DamageRelated.ProccedByEquipment = ProcTypeAPI.ReserveProcType();
-            // no way there'll be someone that changes the language midgzame right????
+            // no way there'll be someone that changes the language midgame right????
             RoR2Application.onLoad += Main.SetupLanguageSpecificStrings;
             var ArtifactTypes = Assembly.GetExecutingAssembly().GetTypes().Where(type => !type.IsAbstract && type.IsSubclassOf(typeof(ArtifactBase)));
             foreach (var artifactType in ArtifactTypes)

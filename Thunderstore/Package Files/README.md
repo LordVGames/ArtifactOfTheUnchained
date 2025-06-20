@@ -2,7 +2,7 @@
 This artifact lets you configure how much of a nerf to damage/proc coefficients you want proc chains, procs from items (fireworks, shurikens, etc) and/or procs from equipments to get.
 
 These are the default settings:
-- Procs spawned from equipments will deal 20% of their normal damage
+- Procs spawned from equipments will deal 40% of their normal damage
 - Procs spawned from other procs (via proc-chaining) will deal 10% of their normal damage
 - Procs spawned from any other items will deal 20% of their normal damage
 - Procs can chain into your other on-hit procs only once.

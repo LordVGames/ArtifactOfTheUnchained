@@ -7,6 +7,7 @@
     "ARTIFACT_UNCHAINED_SANITY_CHECK_DISABLED": "The mod has stopped logging every instance of a nerf.",
 
     "ARTIFACT_UNCHAINED_NO_ITEM_PROC": "Damage from not from a skill detected, preventing procs due to config.",
+    "ARTIFACT_UNCHAINED_ZERO_PROC_LIMIT": "Removing proc coefficient from initial proc due to the limit being 0.",
 
     "ARTIFACT_UNCHAINED_PROC_CHAIN_DAMAGE_NERF": "A chained proc's damage has been nerfed.",
     "ARTIFACT_UNCHAINED_PROC_CHAIN_COEFFICIENT_NERF": "A chained proc's proc coefficient has been nerfed.",
@@ -24,6 +25,9 @@
 
     "ARTIFACT_UNCHAINED_SANITY_CHECK_ENABLED": "The mod will now start logging every proc damage nerf & proc chain block.",
     "ARTIFACT_UNCHAINED_SANITY_CHECK_DISABLED": "The mod has stopped logging every instance of a nerf.",
+
+    "ARTIFACT_UNCHAINED_NO_ITEM_PROC": "Damage from not from a skill detected, preventing procs due to config.",
+    "ARTIFACT_UNCHAINED_ZERO_PROC_LIMIT": "Removing proc coefficient from initial proc due to the limit being 0.",
 
     "ARTIFACT_UNCHAINED_PROC_CHAIN_DAMAGE_NERF": "A chained proc's damage has been nerfed.",
     "ARTIFACT_UNCHAINED_PROC_CHAIN_COEFFICIENT_NERF": "A chained proc's proc coefficient has been nerfed.",

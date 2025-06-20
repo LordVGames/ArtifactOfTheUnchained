@@ -5,7 +5,6 @@ using System.Text;
 using BepInEx;
 using RoR2;
 using UnityEngine;
-using UnityEngine.UIElements.UIR;
 
 namespace ArtifactOfTheUnchainedMod
 {
@@ -14,6 +13,7 @@ namespace ArtifactOfTheUnchainedMod
         internal static class NerfLoggingMessages
         {
             internal static string ProcNotFromSkillBlocked;
+            internal static string ProcBlockedForZeroLimit;
 
             internal static string ProcChainDamageNerf;
             internal static string ProcChainCoefficientNerf;
@@ -27,7 +27,6 @@ namespace ArtifactOfTheUnchainedMod
         }
 
         public static List<ArtifactBase> Artifacts = [];
-        internal static bool AllowLoggingNerfs = false;
 
 
 
@@ -40,35 +39,19 @@ namespace ArtifactOfTheUnchainedMod
             return;
         }
 
-        [ConCommand(commandName = "unchained_toggle_logging_nerfs", flags = ConVarFlags.None)]
-        internal static void CCToggleLoggingNerfs(ConCommandArgs args)
-        {
-            AllowLoggingNerfs = !AllowLoggingNerfs;
-            string message;
-            if (AllowLoggingNerfs)
-            {
-                message = Language.GetString("ARTIFACT_UNCHAINED_SANITY_CHECK_ENABLED");
-            }
-            else
-            {
-                message = Language.GetString("ARTIFACT_UNCHAINED_SANITY_CHECK_DISABLED");
-            }
-            Chat.AddMessage(message);
-            Log.Info(message);
-        }
-
 
 
         internal static void SetupLanguageSpecificStrings()
         {
             NerfLoggingMessages.ProcNotFromSkillBlocked = Language.GetStringFormatted("ARTIFACT_UNCHAINED_NO_ITEM_PROC");
+            NerfLoggingMessages.ProcBlockedForZeroLimit = Language.GetStringFormatted("ARTIFACT_UNCHAINED_");
 
             NerfLoggingMessages.ProcChainDamageNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_PROC_CHAIN_DAMAGE_NERF");
             NerfLoggingMessages.ProcChainCoefficientNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_PROC_CHAIN_COEFFICIENT_NERF");
             NerfLoggingMessages.ProcChainBlocked = Language.GetStringFormatted("ARTIFACT_UNCHAINED_PROC_CHAIN_BLOCKED");
 
-            NerfLoggingMessages.ProcFromItemCoefficientNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_ITEM_PROC_DAMAGE_NERF");
-            NerfLoggingMessages.ProcFromItemDamageNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_ITEM_PROC_COEFFICIENT_NERF");
+            NerfLoggingMessages.ProcFromItemCoefficientNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_ITEM_PROC_COEFFICIENT_NERF");
+            NerfLoggingMessages.ProcFromItemDamageNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_ITEM_PROC_DAMAGE_NERF");
 
             NerfLoggingMessages.ProcFromEquipmentCoefficientNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_EQUIPMENT_PROC_DAMAGE_NERF");
             NerfLoggingMessages.ProcFromEquipmentDamageNerf = Language.GetStringFormatted("ARTIFACT_UNCHAINED_EQUIPMENT_PROC_COEFFICIENT_NERF");
