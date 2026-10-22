@@ -1,3 +1,18 @@
+## 3.0.1
+
+Updated dependencies
+
+Fixed the Relic of Force fix removing the DamageSource for your own attacks in addition to the force hits
+
+## 3.0.0
+
+Major internal refactor
+
+Added config option to change how the mod sets up it's hooks
+- MonoDetour hook may lead to better performance, but might possibly also have weird interactions with other mods (doubt it but who knows)
+
+Fixed error when SS2 is not installed
+
 ## 2.5.1
 
 mfw i don't double check what the changelog text will look like on thunderstore

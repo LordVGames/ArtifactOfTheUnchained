@@ -11,5 +11,5 @@ These are the default settings:
 ![image](https://github.com/user-attachments/assets/6e99f158-b171-4f27-b49d-a4348ea43f34)
 
 ## Bugs/Suggestions
-If you have a suggestion for a feature or found a bug, feel free to either ping me (lordvgames) in the RoR2 modding discord or make a github issue here.
+If you have a suggestion for a feature or found a bug, ping me in the RoR2 modding discord or make a github issue.
 This mod also uses a language file for a few things, so anyone can contribute and add a translation for the mod if they want.

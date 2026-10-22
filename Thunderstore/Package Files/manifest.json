@@ -1,15 +1,16 @@
 ﻿{
 	"name": "ArtifactOfTheUnchained",
-	"version_number": "2.5.1",
+	"version_number": "3.0.1",
 	"website_url": "https://github.com/LordVGames/ArtifactOfTheUnchained",
 	"description": "Adds a highly configurable artifact that lets you customize how proc chains and procs caused by items/equipments should be nerfed.",
 	"dependencies": [
-		"bbepis-BepInExPack-5.4.2117",
-		"RiskofThunder-HookGenPatcher-1.2.5",
-		"RiskofThunder-R2API_Language-1.0.1",
-		"RiskofThunder-R2API_ContentManagement-1.0.8",
+		"bbepis-BepInExPack-5.4.2122",
+		"RiskofThunder-HookGenPatcher-1.2.9",
+		"MonoDetour-MonoDetour_BepInEx_5-0.7.16",
+		"RiskofThunder-R2API_Language-1.1.0",
+		"RiskofThunder-R2API_ContentManagement-1.1.0",
 		"RiskofThunder-R2API_ProcType-1.0.2",
-		"LordVGames-DamageSourceForEnemies-1.2.1",
-		"LordVGames-DamageSourceForEquipment-1.0.1"
+		"Lordryn-DamageSourceForEnemies-2.1.1",
+		"Lordryn-DamageSourceForEquipment-2.0.2"
 	]
 }

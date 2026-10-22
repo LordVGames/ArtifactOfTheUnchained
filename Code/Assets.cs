@@ -1,24 +1,23 @@
 ﻿using System.IO;
 using UnityEngine;
+namespace ArtifactOfTheUnchained;
 
-namespace ArtifactOfTheUnchainedMod
+
+public static class Assets
 {
-    public static class Assets
+    public static AssetBundle AssetBundle;
+    public const string BundleName = "unchainedartifacticons";
+
+    public static string AssetBundlePath
     {
-        public static AssetBundle AssetBundle;
-        public const string BundleName = "unchainedartifacticons";
-
-        public static string AssetBundlePath
+        get
         {
-            get
-            {
-                return Path.Combine(Path.GetDirectoryName(Plugin.PluginInfo.Location), BundleName);
-            }
+            return Path.Combine(Path.GetDirectoryName(Plugin.PluginInfo.Location), BundleName);
         }
+    }
 
-        public static void Init()
-        {
-            AssetBundle = AssetBundle.LoadFromFile(AssetBundlePath);
-        }
+    public static void Init()
+    {
+        AssetBundle = AssetBundle.LoadFromFile(AssetBundlePath);
     }
 }

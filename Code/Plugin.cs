@@ -1,56 +1,60 @@
-﻿using System;
-using System.Reflection;
-using System.Linq;
-using BepInEx;
+﻿using BepInEx;
+using MonoDetour.HookGen;
 using R2API;
 using R2API.ContentManagement;
 using RoR2;
+using static ArtifactOfTheUnchained.ConfigOptions.ForModItself;
+namespace ArtifactOfTheUnchained;
 
-namespace ArtifactOfTheUnchainedMod
+
+[BepInDependency(LanguageAPI.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
+[BepInDependency(ProcTypeAPI.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
+[BepInDependency(R2APIContentManager.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
+[BepInDependency(DamageSourceForEnemies.Plugin.Id, BepInDependency.DependencyFlags.HardDependency)]
+[BepInDependency(DamageSourceForEquipment.Plugin.Id, BepInDependency.DependencyFlags.HardDependency)]
+[BepInDependency(SS2.SS2Main.GUID, BepInDependency.DependencyFlags.SoftDependency)]
+[BepInAutoPlugin]
+public partial class Plugin : BaseUnityPlugin
 {
-    [BepInDependency(LanguageAPI.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
-    [BepInDependency(ProcTypeAPI.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
-    [BepInDependency(R2APIContentManager.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
-    [BepInDependency(DamageSourceForEnemies.Plugin.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
-    [BepInDependency(DamageSourceForEquipment.Plugin.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
+    public static PluginInfo PluginInfo { get; private set; }
 
-    [BepInDependency(RiskOfOptions.PluginInfo.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInDependency(SS2.SS2Main.GUID, BepInDependency.DependencyFlags.SoftDependency)]
 
-    [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
-    public class Plugin : BaseUnityPlugin
+    public void Awake()
     {
-        public static PluginInfo PluginInfo { get; private set; }
-        public const string PluginGUID = PluginAuthor + "." + PluginName;
-        public const string PluginAuthor = "LordVGames";
-        public const string PluginName = "ArtifactOfTheUnchained";
-        public const string PluginVersion = "2.5.1";
-
-        public void Awake()
+        PluginInfo = Info;
+        Log.Init(Logger);
+        ConfigOptions.BindAllConfigOptions(Config);
+        Assets.Init();
+        ModProcTypes.SetupProcTypes();
+        // separate hooks for the setting to save a tiny bit of performance where i can
+        if (ArtifactlessMode.Value)
         {
-            PluginInfo = Info;
-            Log.Init(Logger);
-            Assets.Init();
-            DamageRelated.ProccedByItem = ProcTypeAPI.ReserveProcType();
-            DamageRelated.ProccedByProc = ProcTypeAPI.ReserveProcType();
-            DamageRelated.ProccedByEquipment = ProcTypeAPI.ReserveProcType();
-            // no way there'll be someone that changes the language midgame right????
-            RoR2Application.onLoad += Main.SetupLanguageSpecificStrings;
-            var ArtifactTypes = Assembly.GetExecutingAssembly().GetTypes().Where(type => !type.IsAbstract && type.IsSubclassOf(typeof(ArtifactBase)));
-            foreach (var artifactType in ArtifactTypes)
+            if (HookTypeToUse.Value == HookType.MonoMod)
             {
-                ArtifactBase artifact = (ArtifactBase)Activator.CreateInstance(artifactType);
-                ConfigOptions.BindConfigEntries(Config, artifact);
-
-                if (ConfigOptions.ArtifactlessMode.Value)
-                {
-                    On.RoR2.HealthComponent.TakeDamage += Main.HealthComponent_TakeDamage_Artifactless;
-                }
-                else
-                {
-                    artifact.Init(Config);
-                }
+                On.RoR2.HealthComponent.TakeDamage += ArtifactHooks.MonoMod.HealthComponent_TakeDamage_Artifactless;
+            }
+            else
+            {
+                ArtifactHooks.MonoDetour.SetupArtifactless();
             }
         }
+        else
+        {
+            Artifact.SetupArtifact();
+            if (HookTypeToUse.Value == HookType.MonoMod)
+            {
+                On.RoR2.HealthComponent.TakeDamage += ArtifactHooks.MonoMod.HealthComponent_TakeDamage_Artifact;
+            }
+            else
+            {
+                ArtifactHooks.MonoDetour.SetupArtifact();
+            }
+        }
+        if (ModSupport.Starstorm2.ModIsRunning)
+        {
+            ModSupport.Starstorm2.RelicOfForceDamageSourceFix.Setup();
+        }
+        // no way there'll be someone that changes the language midgame right????
+        RoR2Application.onLoad += Main.SetupLanguageSpecificStrings;
     }
 }

@@ -1,4 +1,4 @@
 ﻿[*.{cs,vb}]
 
-# IDE0130: Namespace does not match folder structure
-dotnet_diagnostic.IDE0130.severity = none
+# HookGen0004: Referenced type is in an assembly that is not publicized
+dotnet_diagnostic.HookGen0004.severity = none
